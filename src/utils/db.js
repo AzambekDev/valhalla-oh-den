@@ -245,9 +245,17 @@ export function subscribeOrders(callback) {
       )
       .subscribe();
 
+    // 🔄 Polling fallback: Automatically query fresh orders from the cloud database every 5 seconds
+    // to guarantee instant dashboard refreshes if WebSockets are slow or throttling.
+    const pollInterval = setInterval(async () => {
+      const freshOrders = await getOrders();
+      if (active) callback(freshOrders);
+    }, 5000);
+
     return () => {
       active = false;
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
   } else {
     const handleStorageChange = async () => {
@@ -255,12 +263,19 @@ export function subscribeOrders(callback) {
       if (active) callback(freshOrders);
     };
 
+    // 🔄 Local Polling fallback: Periodically load local storage to sync tabs instantly
+    const pollInterval = setInterval(async () => {
+      const freshOrders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+      if (active) callback(freshOrders);
+    }, 5000);
+
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("oden_db_update", handleStorageChange);
     return () => {
       active = false;
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("oden_db_update", handleStorageChange);
+      clearInterval(pollInterval);
     };
   }
 }
