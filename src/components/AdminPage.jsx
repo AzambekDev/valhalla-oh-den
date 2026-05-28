@@ -29,9 +29,6 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [cutoffVal, setCutoffVal] = useState("12:05");
   const [forceStatus, setForceStatus] = useState("auto"); // 'auto', 'open', 'closed'
-  const [supabaseUrl, setSupabaseUrl] = useState("");
-  const [supabaseKey, setSupabaseKey] = useState("");
-  
   // DuitNow TnG configurations
   const [tngNumber, setTngNumber] = useState("+601164188797");
   const [tngName, setTngName] = useState("Azambek Sattarov XXX");
@@ -60,10 +57,6 @@ export default function AdminPage() {
     // Load DuitNow config
     setTngNumber(localStorage.getItem("oden_tng_number") || "+601164188797");
     setTngName(localStorage.getItem("oden_tng_name") || "Azambek Sattarov XXX");
-
-    const config = getSupabaseConfig();
-    setSupabaseUrl(config.url || "");
-    setSupabaseKey(config.key || "");
 
     const fetchAdminData = async () => {
       const allOrders = await getOrders();
@@ -183,25 +176,6 @@ export default function AdminPage() {
       alert("Touch 'n Go DuitNow QR merchant credentials updated successfully!");
     } else {
       alert("Please fill in both merchant details!");
-    }
-  };
-
-  const handleSupabaseConnect = (e) => {
-    e.preventDefault();
-    if (supabaseUrl.trim() && supabaseKey.trim()) {
-      localStorage.setItem("oden_supabase_url", supabaseUrl.trim());
-      localStorage.setItem("oden_supabase_key", supabaseKey.trim());
-      resetSupabaseClient();
-      window.dispatchEvent(new Event("storage"));
-      alert("Supabase credentials configured! Refreshing database adapter to cloud mode.");
-    } else if (!supabaseUrl.trim() && !supabaseKey.trim()) {
-      localStorage.removeItem("oden_supabase_url");
-      localStorage.removeItem("oden_supabase_key");
-      resetSupabaseClient();
-      window.dispatchEvent(new Event("storage"));
-      alert("Credentials cleared. Reverting database adapter to Local Demo mode.");
-    } else {
-      alert("Please provide both the Supabase URL and the Anon Key!");
     }
   };
 
@@ -515,53 +489,7 @@ export default function AdminPage() {
 
       </div>
 
-      {/* 4. CLOUD BACKEND CONNECT SETTINGS */}
-      <div className="chart-card">
-        <div className="chart-card-title">
-          <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}><Database size={18} /> Cloud Database Connector (Supabase API)</span>
-          {isSupabaseConnected() ? (
-            <span style={{ fontSize: "0.75rem", background: "rgba(16, 185, 129, 0.15)", padding: "0.25rem 0.5rem", borderRadius: "4px", color: "var(--color-success)", fontWeight: 700 }}>
-              ☁️ CLOUD SYNC ACTIVE
-            </span>
-          ) : (
-            <span style={{ fontSize: "0.75rem", background: "rgba(242, 161, 38, 0.15)", padding: "0.25rem 0.5rem", borderRadius: "4px", color: "var(--accent-gold)", fontWeight: 700 }}>
-              💻 LOCAL STORAGE MOCK ACTIVE
-            </span>
-          )}
-        </div>
-
-        <form onSubmit={handleSupabaseConnect} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "1rem", alignItems: "flex-end" }}>
-          <div className="form-group">
-            <span className="form-label" style={{ fontSize: "0.75rem" }}>Supabase REST URL Endpoint</span>
-            <input 
-              type="url" 
-              className="form-input" 
-              placeholder="https://xyzabcdefg.supabase.co"
-              value={supabaseUrl}
-              onChange={(e) => setSupabaseUrl(e.target.value)}
-              style={{ padding: "0.55rem" }}
-            />
-          </div>
-          <div className="form-group">
-            <span className="form-label" style={{ fontSize: "0.75rem" }}>Supabase API Anon Key</span>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-              value={supabaseKey}
-              onChange={(e) => setSupabaseKey(e.target.value)}
-              style={{ padding: "0.55rem" }}
-            />
-          </div>
-          <button 
-            type="submit" 
-            className="btn btn-primary"
-            style={{ padding: "0.65rem 1.25rem", borderRadius: "10px", fontSize: "0.85rem", height: "39px" }}
-          >
-            {supabaseUrl && supabaseKey ? "Connect & Sync" : "Disconnect / Local Demo"}
-          </button>
-        </form>
-      </div>
+      {/* Cloud Database Connector Panel Removed for Production */}
 
       {/* 5. ORDERS DATABASE LEDGER TABLE */}
       <div className="table-card">

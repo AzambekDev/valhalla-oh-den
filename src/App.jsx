@@ -14,7 +14,6 @@ import {
 import ClientPage from "./components/ClientPage";
 import WorkerPage from "./components/WorkerPage";
 import AdminPage from "./components/AdminPage";
-import DevPanel from "./components/DevPanel";
 import { getCurrentTime } from "./utils/time";
 import { isSupabaseConnected, verifyPasscode } from "./utils/db";
 
@@ -105,20 +104,6 @@ export default function App() {
   return (
     <div className="app-container">
       
-      {/* 1. DEMO MODE INFORMATIONAL BANNER */}
-      {!supabaseActive && (
-        <div className="demo-banner">
-          <span>💡 Running in **Local Demo Mode** (Tabs on this computer will sync instantly in real-time!).</span>
-          <span 
-            className="demo-banner-link" 
-            onClick={() => setActiveTab("admin")}
-          >
-            Connect Free Supabase Cloud Sync <ArrowRight size={13} style={{ display: "inline", verticalAlign: "middle" }} />
-          </span>
-        </div>
-      )}
-
-      {/* 2. PREMIUM BRAND & ROUTING HEADER */}
       <header className="main-header">
         <div className="brand-section">
           <span className="brand-logo">🍢</span>
@@ -245,11 +230,7 @@ export default function App() {
                 </div>
               </form>
 
-              <div style={{ borderTop: "1px solid var(--border-light)", marginTop: "2rem", paddingTop: "1.25rem", fontSize: "0.75rem", color: "var(--color-text-dim)", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                <span>🔑 **Demonstration Defaults:**</span>
-                <span>Worker Passcode: <strong style={{ color: "var(--color-text-muted)" }}>chef123</strong></span>
-                <span>Manager Passcode: <strong style={{ color: "var(--color-text-muted)" }}>admin123</strong></span>
-              </div>
+              {/* Demonstration Defaults Removed for Production */}
 
             </div>
           </div>
@@ -263,9 +244,6 @@ export default function App() {
         )}
 
       </main>
-
-      {/* 4. FLOATING DEV DEMO TOOL PANEL */}
-      <DevPanel />
 
     </div>
   );
