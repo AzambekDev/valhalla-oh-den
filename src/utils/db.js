@@ -9,10 +9,10 @@ export async function sha256(message) {
   return hashHex;
 }
 
-// Retrieve keys strictly from environment variables
+// Retrieve keys from environment variables OR localStorage fallback
 export function getSupabaseConfig() {
-  const url = import.meta.env.VITE_SUPABASE_URL || "";
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+  const url = import.meta.env.VITE_SUPABASE_URL || localStorage.getItem("oden_supabase_url") || "";
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY || localStorage.getItem("oden_supabase_key") || "";
   return { url, key };
 }
 
@@ -79,6 +79,11 @@ if (!currentTngName || currentTngName === OLD_TNG_NAME || currentTngName === "Az
   localStorage.setItem("oden_tng_name", "SATTAROV AZAMBEK XXX");
 }
 
+// Initialize empty orders storage if not set
+if (!localStorage.getItem("oden_orders")) {
+  localStorage.setItem("oden_orders", JSON.stringify([]));
+}
+
 /**
  * Verifies a plaintext passcode against the stored SHA-256 hash.
  */
@@ -103,15 +108,19 @@ export async function setPasscode(role, plaintext) {
 
 export async function getOrders() {
   const supabase = getSupabaseClient();
-  if (!supabase) {
-    throw new Error("Supabase cloud database is not connected.");
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      console.error("Supabase getOrders error, falling back to local:", e);
+    }
   }
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return data || [];
+  return JSON.parse(localStorage.getItem("oden_orders") || "[]");
 }
 
 export async function addOrder(orderData) {
@@ -126,54 +135,92 @@ export async function addOrder(orderData) {
   };
 
   const supabase = getSupabaseClient();
-  if (!supabase) {
-    throw new Error("Supabase cloud database is not connected.");
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .insert([newOrder])
+        .select();
+      if (error) throw error;
+      return data[0];
+    } catch (e) {
+      console.error("Supabase addOrder error, falling back to local:", e);
+    }
   }
-  const { data, error } = await supabase
-    .from("orders")
-    .insert([newOrder])
-    .select();
-  if (error) throw error;
-  return data[0];
+
+  const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+  orders.unshift(newOrder);
+  localStorage.setItem("oden_orders", JSON.stringify(orders));
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new Event("oden_db_update"));
+  return newOrder;
 }
 
 export async function updateOrderStatus(orderId, status) {
   const supabase = getSupabaseClient();
-  if (!supabase) {
-    throw new Error("Supabase cloud database is not connected.");
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .update({ status })
+        .eq("id", orderId)
+        .select();
+      if (error) throw error;
+      return data[0];
+    } catch (e) {
+      console.error("Supabase updateOrderStatus error, falling back to local:", e);
+    }
   }
-  const { data, error } = await supabase
-    .from("orders")
-    .update({ status })
-    .eq("id", orderId)
-    .select();
-  if (error) throw error;
-  return data[0];
+
+  const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+  const updatedOrders = orders.map(o => o.id === orderId ? { ...o, status } : o);
+  localStorage.setItem("oden_orders", JSON.stringify(updatedOrders));
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new Event("oden_db_update"));
+  return updatedOrders.find(o => o.id === orderId);
 }
 
 export async function deleteOrder(orderId) {
   const supabase = getSupabaseClient();
-  if (!supabase) {
-    throw new Error("Supabase cloud database is not connected.");
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", orderId);
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.error("Supabase deleteOrder error, falling back to local:", e);
+    }
   }
-  const { error } = await supabase
-    .from("orders")
-    .delete()
-    .eq("id", orderId);
-  if (error) throw error;
+
+  const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+  const updatedOrders = orders.filter(o => o.id !== orderId);
+  localStorage.setItem("oden_orders", JSON.stringify(updatedOrders));
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new Event("oden_db_update"));
   return true;
 }
 
 export async function clearOrders() {
   const supabase = getSupabaseClient();
-  if (!supabase) {
-    throw new Error("Supabase cloud database is not connected.");
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .delete()
+        .neq("id", "placeholder");
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.error("Supabase clearOrders error, falling back to local:", e);
+    }
   }
-  const { error } = await supabase
-    .from("orders")
-    .delete()
-    .neq("id", "placeholder");
-  if (error) throw error;
+
+  localStorage.setItem("oden_orders", JSON.stringify([]));
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new Event("oden_db_update"));
   return true;
 }
 
@@ -182,25 +229,38 @@ export function subscribeOrders(callback) {
 
   getOrders().then(orders => {
     if (active) callback(orders);
-  }).catch(err => console.error("Error loading initial orders:", err));
+  });
 
   const supabase = getSupabaseClient();
-  if (!supabase) return () => {};
+  if (supabase) {
+    const channel = supabase
+      .channel("custom-all-channel")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        async () => {
+          const freshOrders = await getOrders();
+          if (active) callback(freshOrders);
+        }
+      )
+      .subscribe();
 
-  const channel = supabase
-    .channel("custom-all-channel")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "orders" },
-      async () => {
-        const freshOrders = await getOrders();
-        if (active) callback(freshOrders);
-      }
-    )
-    .subscribe();
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  } else {
+    const handleStorageChange = async () => {
+      const freshOrders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+      if (active) callback(freshOrders);
+    };
 
-  return () => {
-    active = false;
-    supabase.removeChannel(channel);
-  };
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("oden_db_update", handleStorageChange);
+    return () => {
+      active = false;
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("oden_db_update", handleStorageChange);
+    };
+  }
 }
