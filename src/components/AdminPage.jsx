@@ -31,7 +31,7 @@ export default function AdminPage() {
   const [forceStatus, setForceStatus] = useState("auto"); // 'auto', 'open', 'closed'
   // DuitNow TnG configurations
   const [tngNumber, setTngNumber] = useState("+601164188797");
-  const [tngName, setTngName] = useState("Azambek Sattarov XXX");
+  const [tngName, setTngName] = useState("SATTAROV AZAMBEK XXX");
 
   // 🔐 Secure Passcode states
   const [newAdminPass, setNewAdminPass] = useState("");
@@ -56,7 +56,7 @@ export default function AdminPage() {
     
     // Load DuitNow config
     setTngNumber(localStorage.getItem("oden_tng_number") || "+601164188797");
-    setTngName(localStorage.getItem("oden_tng_name") || "Azambek Sattarov XXX");
+    setTngName(localStorage.getItem("oden_tng_name") || "SATTAROV AZAMBEK XXX");
 
     const fetchAdminData = async () => {
       const allOrders = await getOrders();
@@ -71,7 +71,7 @@ export default function AdminPage() {
       setCutoffVal(getCutoffTime());
       setForceStatus(localStorage.getItem("oden_force_status") || "auto");
       setTngNumber(localStorage.getItem("oden_tng_number") || "+601164188797");
-      setTngName(localStorage.getItem("oden_tng_name") || "Azambek Sattarov XXX");
+      setTngName(localStorage.getItem("oden_tng_name") || "SATTAROV AZAMBEK XXX");
       const allOrders = await getOrders();
       setOrders(allOrders);
       calculateKPIs(allOrders);

@@ -23,13 +23,13 @@ import {
 } from "../utils/time";
 import { addOrder, subscribeOrders } from "../utils/db";
 
-// Custom Menu Pricing
+// Custom Menu Pricing (All skewers set to RM 3.00)
 const SKEWER_PRICES = {
-  "Cheese Tofu": 1.50,
-  "Fish Sandwich": 1.60,
-  "Seafood Tofu": 1.40,
-  "Fish Ball": 1.00,
-  "Seafood Beancurd Roll": 1.80
+  "Cheese Tofu": 3.00,
+  "Fish Sandwich": 3.00,
+  "Seafood Tofu": 3.00,
+  "Fish Ball": 3.00,
+  "Seafood Beancurd Roll": 3.00
 };
 
 const SKEWER_DESCRIPTIONS = {
@@ -82,7 +82,7 @@ export default function ClientPage() {
 
   // DuitNow QR settings
   const [tngNumber, setTngNumber] = useState("+601164188797");
-  const [tngName, setTngName] = useState("Azambek Sattarov XXX");
+  const [tngName, setTngName] = useState("SATTAROV AZAMBEK XXX");
 
   // Time & Status checker
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function ClientPage() {
 
     // Load merchant DuitNow details
     setTngNumber(localStorage.getItem("oden_tng_number") || "+601164188797");
-    setTngName(localStorage.getItem("oden_tng_name") || "Azambek Sattarov XXX");
+    setTngName(localStorage.getItem("oden_tng_name") || "SATTAROV AZAMBEK XXX");
 
     const handleStorage = () => {
       setStatus(getOrderingStatus());
@@ -112,7 +112,7 @@ export default function ClientPage() {
         setActiveReceiptId(rid);
       }
       setTngNumber(localStorage.getItem("oden_tng_number") || "+601164188797");
-      setTngName(localStorage.getItem("oden_tng_name") || "Azambek Sattarov XXX");
+      setTngName(localStorage.getItem("oden_tng_name") || "SATTAROV AZAMBEK XXX");
     };
 
     window.addEventListener("storage", handleStorage);
@@ -173,6 +173,9 @@ export default function ClientPage() {
     Object.keys(skewerQty).forEach(key => {
       sum += skewerQty[key] * (SKEWER_PRICES[key] || 0);
     });
+    if (soupBase) {
+      sum += 5.00; // Soup stock is RM 5.00
+    }
     return sum;
   };
 
@@ -346,7 +349,7 @@ export default function ClientPage() {
             
             <div className="receipt-item-row" style={{ fontWeight: 700, color: activeOrder.soup_base === "Tom-Yum" ? "var(--accent-red)" : "var(--accent-gold)", marginBottom: "0.5rem" }}>
               <span>🍲 Soup: {activeOrder.soup_base} Base</span>
-              <span>FREE</span>
+              <span>$5.00</span>
             </div>
 
             {Object.keys(activeOrder.items).map((key) => (
@@ -617,44 +620,13 @@ export default function ClientPage() {
                 <div style={{ background: "var(--bg-input)", border: "1px solid var(--border-light)", borderRadius: "12px", padding: "1.5rem", animation: "slideUp 0.3s ease" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: "1.5rem", alignItems: "center" }}>
                     
-                    {/* SVG Styled DuitNow QR Mock */}
+                    {/* Real Touch 'n Go DuitNow QR Image */}
                     <div style={{ background: "white", padding: "0.5rem", borderRadius: "8px", boxShadow: "0 4px 10px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
-                      {/* DuitNow stylized Header banner */}
-                      <div style={{ width: "100%", height: "14px", background: "#ee1e5b", borderRadius: "4px 4px 0 0", display: "flex" }}>
-                        <span style={{ margin: "auto", fontSize: "0.45rem", fontWeight: "bold", color: "white", fontFamily: "sans-serif" }}>DuitNow</span>
-                      </div>
-                      
-                      {/* Custom SVG QR Code pattern */}
-                      <svg width="100" height="100" viewBox="0 0 100 100">
-                        <rect x="0" y="0" width="100" height="100" fill="white"/>
-                        {/* QR Finder patterns */}
-                        <rect x="5" y="5" width="25" height="25" fill="#005baa"/>
-                        <rect x="10" y="10" width="15" height="15" fill="white"/>
-                        <rect x="12" y="12" width="11" height="11" fill="#005baa"/>
-
-                        <rect x="70" y="5" width="25" height="25" fill="#005baa"/>
-                        <rect x="75" y="10" width="15" height="15" fill="white"/>
-                        <rect x="77" y="12" width="11" height="11" fill="#005baa"/>
-
-                        <rect x="5" y="70" width="25" height="25" fill="#005baa"/>
-                        <rect x="10" y="75" width="15" height="15" fill="white"/>
-                        <rect x="12" y="77" width="11" height="11" fill="#005baa"/>
-
-                        {/* Center DuitNow themed logo dot */}
-                        <circle cx="50" cy="50" r="10" fill="#ee1e5b"/>
-                        <circle cx="50" cy="50" r="4" fill="white"/>
-
-                        {/* Random QR code pixels */}
-                        <rect x="35" y="10" width="8" height="8" fill="%23333"/>
-                        <rect x="45" y="20" width="12" height="4" fill="%23333"/>
-                        <rect x="15" y="45" width="6" height="12" fill="%23333"/>
-                        <rect x="35" y="75" width="10" height="15" fill="%23333"/>
-                        <rect x="70" y="45" width="20" height="8" fill="%23333"/>
-                        <rect x="80" y="75" width="8" height="12" fill="%23333"/>
-                        <rect x="50" y="70" width="12" height="12" fill="%23333"/>
-                        <rect x="40" y="40" width="5" height="5" fill="%23333"/>
-                      </svg>
-                      <span style={{ fontSize: "0.5rem", color: "#666", fontWeight: "bold", fontFamily: "sans-serif" }}>Touch n Go</span>
+                      <img 
+                        src="/tng_qr.jpg" 
+                        alt="Touch 'n Go DuitNow QR Code" 
+                        style={{ width: "120px", height: "auto", borderRadius: "6px", display: "block" }}
+                      />
                     </div>
 
                     {/* DuitNow Transfer Details & Inputs */}
@@ -783,7 +755,7 @@ export default function ClientPage() {
           {soupBase ? (
             <div className="cart-item" style={{ color: soupBase === "Tom-Yum" ? "var(--accent-red)" : "var(--accent-gold)", fontWeight: 700 }}>
               <span className="cart-item-name">🍲 Soup: {soupBase}</span>
-              <span className="cart-item-qty">Selected</span>
+              <span className="cart-item-qty">$5.00</span>
             </div>
           ) : (
             <div className="cart-item" style={{ fontStyle: "italic", color: "var(--color-text-dim)" }}>

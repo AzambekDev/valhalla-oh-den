@@ -75,8 +75,8 @@ if (!currentTngNumber || currentTngNumber === OLD_TNG_NUMBER) {
 }
 
 const currentTngName = localStorage.getItem("oden_tng_name");
-if (!currentTngName || currentTngName === OLD_TNG_NAME) {
-  localStorage.setItem("oden_tng_name", "Azambek Sattarov XXX");
+if (!currentTngName || currentTngName === OLD_TNG_NAME || currentTngName === "Azambek Sattarov XXX") {
+  localStorage.setItem("oden_tng_name", "SATTAROV AZAMBEK XXX");
 }
 
 /**
