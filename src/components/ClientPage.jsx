@@ -357,7 +357,11 @@ export default function ClientPage() {
       <div className="receipt-wrapper" style={{ animation: "slideUp 0.4s ease" }}>
         <div className="receipt-card">
           <div className="receipt-header">
-            <div className="receipt-logo">🍢</div>
+            <img 
+              src="/logo.jpg" 
+              alt="Valhalla Oh-Den! Logo" 
+              style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid rgba(0,0,0,0.1)", margin: "0 auto 0.5rem auto", display: "block" }}
+            />
             <div className="receipt-shop-name">VALHALLA OH-DEN!</div>
             <div style={{ fontSize: "0.75rem", color: "#666666", marginTop: "0.15rem", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.25rem" }}>
               <MapPin size={11} style={{ color: "var(--accent-red)" }} /> APU Atrium (Ground Floor)

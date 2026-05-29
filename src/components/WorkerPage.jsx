@@ -585,7 +585,11 @@ export default function WorkerPage() {
         <div style={{ display: "none" }}>
           <div className="receipt-card">
             <div className="receipt-header">
-              <div className="receipt-logo">🍢</div>
+              <img 
+                src="/logo.jpg" 
+                alt="Valhalla Oh-Den! Logo" 
+                style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid #000000", margin: "0 auto 0.25rem auto", display: "block" }}
+              />
               <div className="receipt-shop-name">VALHALLA OH-DEN! (KITCHEN)</div>
               <div style={{ fontSize: "0.8rem", fontWeight: "bold" }}>-- PRE-ORDER SLIP --</div>
               <div className="receipt-number">{selectedPrintOrder.id}</div>

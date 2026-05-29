@@ -106,12 +106,15 @@ export default function App() {
       
       <header className="main-header">
         <div className="brand-section">
-          <span className="brand-logo">🍢</span>
+          <img 
+            src="/logo.jpg" 
+            alt="Valhalla Oh-Den! Logo" 
+            style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid var(--accent-gold)", display: "block" }}
+          />
           <div style={{ display: "flex", flexDirection: "column" }}>
             <span className="brand-name">Valhalla Oh-Den!</span>
             <span style={{ fontSize: "0.65rem", color: "var(--color-text-muted)" }}>Simmering Atrium System</span>
           </div>
-          <span className="brand-tag">Secure</span>
         </div>
 
         {/* Dynamic Navigation Tabs */}
