@@ -130,6 +130,7 @@ export async function addOrder(orderData) {
     payment_method: "cash",
     payment_ref: "",
     payment_slip: null,
+    ping_count: 0,
     created_at: new Date().toISOString(),
     ...orderData
   };

@@ -82,9 +82,10 @@ export default function WorkerPage() {
   const handlePingCustomer = async (order) => {
     try {
       await pingCustomer(order.id, order.ping_count);
+      alert(`🔔 Reminder ping sent to ${order.customer_name}! Their device is chiming and calling out their order now.`);
     } catch (e) {
       console.error(e);
-      alert("Failed to trigger remote customer reminder ping.");
+      alert("Failed to trigger remote customer reminder ping. Please verify your Supabase database has the 'ping_count' column added!");
     }
   };
 
