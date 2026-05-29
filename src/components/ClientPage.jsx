@@ -656,7 +656,7 @@ export default function ClientPage() {
                     />
                   </div>
 
-                  <div className="form-group full-width">
+                  <div className="form-group">
                     <label className="form-label">
                       <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><Clock size={14} /> Select Atrium Pickup Slot</span>
                     </label>
