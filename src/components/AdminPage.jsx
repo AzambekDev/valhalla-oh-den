@@ -20,7 +20,8 @@ import {
   isSupabaseConnected, 
   getSupabaseConfig,
   resetSupabaseClient,
-  setPasscode 
+  setPasscode,
+  clearOrders 
 } from "../utils/db";
 import { getCutoffTime, setCutoffTime } from "../utils/time";
 
@@ -36,6 +37,8 @@ export default function AdminPage() {
   // 🔐 Secure Passcode states
   const [newAdminPass, setNewAdminPass] = useState("");
   const [newWorkerPass, setNewWorkerPass] = useState("");
+  const [purgeInput, setPurgeInput] = useState("");
+  const [isPurging, setIsPurging] = useState(false);
 
   // KPI stats
   const [kpis, setKpis] = useState({
@@ -185,6 +188,30 @@ export default function AdminPage() {
       const updated = orders.filter(o => o.id !== orderId);
       setOrders(updated);
       calculateKPIs(updated);
+    }
+  };
+
+  const handlePurgeDatabase = async (e) => {
+    e.preventDefault();
+    if (purgeInput !== "clear valhalla-oh-den database " && purgeInput !== "clear valhalla-oh-den database") {
+      alert("Invalid confirmation phrase! Please type exactly: clear valhalla-oh-den database ");
+      return;
+    }
+
+    if (window.confirm("CRITICAL WARNING: Are you absolutely sure you want to completely wipe the entire cloud database? This will permanently delete all customer orders and cannot be undone!")) {
+      setIsPurging(true);
+      try {
+        await clearOrders();
+        setOrders([]);
+        calculateKPIs([]);
+        setPurgeInput("");
+        alert("🎉 Success! The Valhalla Oh-Den! cloud database has been completely wiped clean. All test logs and receipts have been successfully deleted.");
+      } catch (err) {
+        console.error(err);
+        alert("Failed to wipe database. Please try again.");
+      } finally {
+        setIsPurging(false);
+      }
     }
   };
 
@@ -489,7 +516,56 @@ export default function AdminPage() {
 
       </div>
 
-      {/* Cloud Database Connector Panel Removed for Production */}
+      {/* 4. ⚠️ DANGER ZONE: CLOUD DATABASE PURGE GATE */}
+      <div className="chart-card" style={{ border: "1px solid rgba(239, 68, 68, 0.2)", background: "rgba(239, 68, 68, 0.02)" }}>
+        <div className="chart-card-title">
+          <span style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--accent-red)", fontWeight: "bold" }}>
+            ⚠️ Danger Zone: Purge All Pre-Order Logs
+          </span>
+        </div>
+
+        <form onSubmit={handlePurgeDatabase} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", lineHeight: "1.4", borderBottom: "1px solid rgba(239, 68, 68, 0.1)", paddingBottom: "0.5rem" }}>
+            💥 **Warning:** Wiping the database permanently deletes all pre-order lists, transaction histories, receipt slips, and sales KPIs from the Supabase cloud tables. This is irreversible. Highly recommended before going live!
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1rem", alignItems: "flex-end" }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <span className="form-label" style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
+                To verify, please type exactly: <strong style={{ color: "var(--color-text-main)", fontFamily: "monospace" }}>clear valhalla-oh-den database </strong>
+              </span>
+              <input 
+                type="text" 
+                className="form-input" 
+                placeholder='Type: "clear valhalla-oh-den database "'
+                value={purgeInput}
+                onChange={(e) => setPurgeInput(e.target.value)}
+                style={{ padding: "0.55rem", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", margin: 0, width: "100%" }}
+                required
+              />
+            </div>
+            
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={isPurging || (purgeInput !== "clear valhalla-oh-den database " && purgeInput !== "clear valhalla-oh-den database")}
+              style={{ 
+                padding: "0.65rem 1.25rem", 
+                borderRadius: "10px", 
+                fontSize: "0.85rem", 
+                height: "39px",
+                background: "var(--accent-red)",
+                color: "white",
+                opacity: (purgeInput === "clear valhalla-oh-den database " || purgeInput === "clear valhalla-oh-den database") ? 1 : 0.4,
+                cursor: (purgeInput === "clear valhalla-oh-den database " || purgeInput === "clear valhalla-oh-den database") ? "pointer" : "not-allowed",
+                boxShadow: "none"
+              }}
+            >
+              {isPurging ? "Wiping Database..." : "💥 Wipe Cloud Database & Reset Stall"}
+            </button>
+          </div>
+        </form>
+      </div>
 
       {/* 5. ORDERS DATABASE LEDGER TABLE */}
       <div className="table-card">
