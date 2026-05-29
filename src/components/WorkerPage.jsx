@@ -396,27 +396,13 @@ export default function WorkerPage() {
                     <button 
                       className="order-action-btn btn-complete"
                       onClick={() => handleStatusChange(order.id, "completed")}
-                      style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: 1.2 }}
                     >
                       <Check size={12} /> Hand Over
-                    </button>
-                    <button
-                      className="order-action-btn"
-                      onClick={() => {
-                        const cleanPhone = order.phone.replace(/[^0-9]/g, "");
-                        const text = encodeURIComponent(`Hi ${order.customer_name}! Your hot Valhalla Oh-Den bowl (Order ${order.id}) is freshly prepared and ready for pickup at the APU Atrium! Please show this receipt number when collecting. Thank you! 🍢`);
-                        window.open(`https://wa.me/${cleanPhone}?text=${text}`, "_blank");
-                      }}
-                      style={{ background: "#25D366", color: "white", padding: "0.25rem 0.5rem", fontSize: "0.75rem", fontWeight: "bold", flex: 1.5 }}
-                      title="Send WhatsApp pickup alert"
-                    >
-                      📲 Ping Ready
                     </button>
                     <button 
                       className="order-action-btn btn-print"
                       onClick={() => handlePrint(order)}
                       title="Print order slip"
-                      style={{ padding: "0.25rem 0.4rem" }}
                     >
                       <Printer size={12} />
                     </button>
