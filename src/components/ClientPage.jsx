@@ -297,8 +297,12 @@ export default function ClientPage() {
             <div className="receipt-number">{activeOrder.id}</div>
             
             <div>
-              <span className={`receipt-status-badge ${activeOrder.status}`}>
-                {activeOrder.status === "pending" && "Preparing Order"}
+              <span className={`receipt-status-badge ${activeOrder.status === "pending" && activeOrder.payment_method === "cash" ? "awaiting-cash" : activeOrder.status}`}>
+                {activeOrder.status === "pending" && (
+                  activeOrder.payment_method === "cash" 
+                    ? "Awaiting Cash Payment ⚠️" 
+                    : "Preparing Order"
+                )}
                 {activeOrder.status === "preparing" && "Cooking Oden"}
                 {activeOrder.status === "ready" && "Ready for Pickup! 🎉"}
                 {activeOrder.status === "completed" && "Completed / Handed Over"}
@@ -370,10 +374,10 @@ export default function ClientPage() {
               ⚡ Your Oden is steaming hot and packaged! Head to the Atrium stall, present this receipt number, and pick it up!
             </div>
           ) : (
-            <div style={{ background: "rgba(242, 161, 38, 0.05)", border: "1px solid var(--border-light)", color: "#666", borderRadius: "8px", padding: "0.75rem", fontSize: "0.85rem", textAlign: "center", fontStyle: "italic", marginBottom: "1rem" }}>
+            <div style={{ background: activeOrder.payment_method === "cash" ? "rgba(239, 68, 68, 0.08)" : "rgba(242, 161, 38, 0.05)", border: activeOrder.payment_method === "cash" ? "1px solid rgba(239, 68, 68, 0.25)" : "1px solid var(--border-light)", color: activeOrder.payment_method === "cash" ? "var(--accent-red)" : "#666", borderRadius: "8px", padding: "0.75rem", fontSize: "0.85rem", textAlign: "center", fontStyle: "italic", marginBottom: "1rem", fontWeight: activeOrder.payment_method === "cash" ? 700 : "normal" }}>
               {activeOrder.payment_method === "cash" 
-                ? "💵 Please prepare exact cash of $" + parseFloat(activeOrder.total_price).toFixed(2) + " to pay during Atrium pickup."
-                : "📲 Touch 'n Go payment slip uploaded. Kitchen is verifying receipt details."}
+                ? "⚠️ UNCONFIRMED PRE-ORDER: Cooking will ONLY start after you make physical cash payment at our APU Atrium counter. Please hand over RM " + parseFloat(activeOrder.total_price).toFixed(2) + " to verify and begin prep!"
+                : "📲 Touch 'n Go payment slip uploaded. Kitchen is verifying transfer details and preparing your steaming bowl."}
             </div>
           )}
 

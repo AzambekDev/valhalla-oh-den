@@ -788,6 +788,12 @@ select.form-input {
   color: #0369a1;
 }
 
+.receipt-status-badge.awaiting-cash {
+  background: #fee2e2;
+  color: #b91c1c;
+  animation: pulseLight 1.5s infinite;
+}
+
 .receipt-status-badge.preparing {
   background: #fef3c7;
   color: #b45309;

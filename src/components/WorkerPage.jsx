@@ -171,8 +171,18 @@ export default function WorkerPage() {
                         <QrCode size={11} /> TnG (Ref: {order.payment_ref.slice(-4)}) 📸
                       </span>
                     ) : (
-                      <span className="order-card-soup" style={{ background: "rgba(52, 211, 153, 0.12)", color: "var(--color-success)", display: "inline-flex", alignItems: "center", gap: "0.15rem" }}>
-                        <DollarSign size={11} /> Cash
+                      <span 
+                        className="order-card-soup" 
+                        style={{ 
+                          background: "rgba(239, 68, 68, 0.15)", 
+                          color: "var(--accent-red)", 
+                          display: "inline-flex", 
+                          alignItems: "center", 
+                          gap: "0.15rem",
+                          fontWeight: "bold"
+                        }}
+                      >
+                        <DollarSign size={11} /> Cash (Pay First ⚠️)
                       </span>
                     )}
                   </div>
@@ -191,12 +201,22 @@ export default function WorkerPage() {
                   </div>
 
                   <div className="order-card-footer">
-                    <button 
-                      className="order-action-btn btn-cook"
-                      onClick={() => handleStatusChange(order.id, "preparing")}
-                    >
-                      <Flame size={12} /> Start Prep
-                    </button>
+                    {order.payment_method === "cash" ? (
+                      <button 
+                        className="order-action-btn btn-cook"
+                        onClick={() => handleStatusChange(order.id, "preparing")}
+                        style={{ background: "var(--color-success)", color: "white", flex: 1, fontWeight: "bold" }}
+                      >
+                        💵 Confirm Pay & Cook
+                      </button>
+                    ) : (
+                      <button 
+                        className="order-action-btn btn-cook"
+                        onClick={() => handleStatusChange(order.id, "preparing")}
+                      >
+                        <Flame size={12} /> Start Prep
+                      </button>
+                    )}
                     <button 
                       className="order-action-btn btn-print"
                       onClick={() => handlePrint(order)}
