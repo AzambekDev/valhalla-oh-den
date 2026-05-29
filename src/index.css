@@ -497,7 +497,7 @@ body {
 /* Step 3: Customer details form */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 
