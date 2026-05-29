@@ -675,7 +675,7 @@ export default function ClientPage() {
                   Select Payment Method
                 </span>
                 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div className="payment-selector-grid">
                   
                   {/* Option 1: Cash */}
                   <div 
@@ -712,8 +712,8 @@ export default function ClientPage() {
 
               {/* 📲 TnG DuitNow QR Interactive Area */}
               {paymentMethod === "tng" && (
-                <div style={{ background: "var(--bg-input)", border: "1px solid var(--border-light)", borderRadius: "12px", padding: "1.5rem", animation: "slideUp 0.3s ease" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: "1.5rem", alignItems: "center" }}>
+                <div className="tng-payment-box">
+                  <div className="tng-payment-grid">
                     
                     {/* Real Touch 'n Go DuitNow QR Image */}
                     <div style={{ background: "white", padding: "0.5rem", borderRadius: "8px", boxShadow: "0 4px 10px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
@@ -735,7 +735,7 @@ export default function ClientPage() {
                         </div>
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "1rem" }}>
+                      <div className="tng-payment-inputs">
                         <div className="form-group">
                           <label className="form-label" style={{ fontSize: "0.75rem" }}>12-Digit TnG Transaction Ref ID</label>
                           <input 
