@@ -54,73 +54,147 @@ const SOUP_DETAILS = {
   }
 };
 
+// Programmatic WAV file generator to generate a super loud, harsh 1000Hz sweeping siren blob URL
+// This allows bypass of iOS/iPhone "Silent Mode" physical switches by running as a Media playback stream!
+function generateLoudBuzzerWav() {
+  try {
+    const sampleRate = 8000; // Lightweight 8kHz sample rate
+    const duration = 1.5;    // 1.5 seconds siren sweep
+    const numSamples = sampleRate * duration;
+    const buffer = new ArrayBuffer(44 + numSamples);
+    const view = new DataView(buffer);
+    
+    // Auxiliary string writer helper
+    const writeStr = (v, offset, str) => {
+      for (let i = 0; i < str.length; i++) {
+        v.setUint8(offset + i, str.charCodeAt(i));
+      }
+    };
+    
+    writeStr(view, 0, 'RIFF');
+    view.setUint32(4, 36 + numSamples, true);
+    writeStr(view, 8, 'WAVE');
+    writeStr(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM Format
+    view.setUint16(22, 1, true); // Mono
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate, true); // Byte rate
+    view.setUint16(32, 1, true); // Block align
+    view.setUint16(34, 8, true); // 8-bit samples
+    writeStr(view, 36, 'data');
+    view.setUint32(40, numSamples, true);
+    
+    const baseFreq = 950;
+    // Generate a grating, extreme loudness square wave that sweeps between 750Hz and 1250Hz
+    for (let i = 0; i < numSamples; i++) {
+      const t = i / sampleRate;
+      const sweepFreq = baseFreq + Math.sin(t * 12) * 250; 
+      const val = Math.sin(2 * Math.PI * sweepFreq * t) > 0 ? 235 : 20; // Piercing square wave clipping limits
+      view.setUint8(44 + i, val);
+    }
+    
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    return URL.createObjectURL(blob);
+  } catch (e) {
+    console.error("Failed to generate offline WAV buzzer:", e);
+    return "";
+  }
+}
+
+let buzzerAudioUrl = null;
+let iosBuzzerAudio = null;
+
+function initBuzzerAudio() {
+  try {
+    if (iosBuzzerAudio && buzzerAudioUrl) return;
+    buzzerAudioUrl = generateLoudBuzzerWav();
+    if (buzzerAudioUrl) {
+      iosBuzzerAudio = new Audio(buzzerAudioUrl);
+      iosBuzzerAudio.loop = true; // Loop the loud siren continuously until clicked dismiss
+      iosBuzzerAudio.volume = 1.0; // Max hardware volume
+    }
+  } catch (e) {
+    console.error("Failed to initialize media player:", e);
+  }
+}
+
 // Web Audio sharp, loud alarm siren for customer alert (optimized for noisy environments like APU Atrium)
 function playCustomerChime() {
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    
-    // Use the keepalive active iOS context or fall back
-    const ctx = iosAudioCtx || new AudioContext();
-    if (ctx.state === "suspended") {
-      ctx.resume();
+    // 1. Play the loud HTML5 audio buzzer (bypasses iPhone Silent Switch completely!)
+    initBuzzerAudio();
+    if (iosBuzzerAudio) {
+      iosBuzzerAudio.currentTime = 0;
+      const playPromise = iosBuzzerAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.warn("HTML5 audio playback blocked, retrying...", e);
+        });
+      }
     }
 
-    // Trigger powerful tactile vibration pulses to physically shake the customer's phone!
+    // 2. Trigger powerful tactile vibration pulses to physically shake the customer's phone!
     if (navigator.vibrate) {
       // Extensive heavy high-intensity pattern: 800ms vibration, 150ms pause, repeated. (Total ~8.5 seconds)
       navigator.vibrate([800, 150, 800, 150, 800, 150, 800, 150, 800, 150, 800, 150, 800, 150, 800]);
     }
 
-    // Play high-intensity penetrative dual detuned buzzer siren pulses over 4.2 seconds
-    const now = ctx.currentTime;
-    
-    const playBuzzerPulse = (startTime, freq) => {
-      // Create detuned dual oscillators (sawtooth + square) for a grating, metallic industrial alarm sound
-      const oscSaw = ctx.createOscillator();
-      const oscSq = ctx.createOscillator();
-      const gainNode = ctx.createGain();
+    // 3. Play high-intensity Web Audio backstops for dense layered volume
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      const ctx = iosAudioCtx || new AudioContext();
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+      const now = ctx.currentTime;
       
-      // Pro Dynamics Compressor prevents iOS Webkit from compressing/silencing high amplitude peaks
-      const compressor = ctx.createDynamicsCompressor();
-      compressor.threshold.setValueAtTime(-24, startTime);
-      compressor.knee.setValueAtTime(30, startTime);
-      compressor.ratio.setValueAtTime(12, startTime);
-      compressor.attack.setValueAtTime(0.003, startTime);
-      compressor.release.setValueAtTime(0.25, startTime);
-      
-      oscSaw.type = "sawtooth"; // Rich bright high-frequency cutting harmonics
-      oscSaw.frequency.setValueAtTime(freq, startTime);
-      oscSaw.frequency.exponentialRampToValueAtTime(freq * 1.38, startTime + 0.35); // Sweeping siren chirp
-      
-      oscSq.type = "square"; // Penetrative, solid buzzer texture
-      oscSq.frequency.setValueAtTime(freq * 1.015, startTime); // Slightly detuned by 1.5% for an acoustic beating effect
-      oscSq.frequency.exponentialRampToValueAtTime(freq * 1.38 * 1.015, startTime + 0.35);
-      
-      // Piercing gain level (0.75 combined with compressor avoids triggering iOS protective limiter squashing)
-      gainNode.gain.setValueAtTime(0.001, startTime);
-      gainNode.gain.linearRampToValueAtTime(0.75, startTime + 0.05); 
-      gainNode.gain.linearRampToValueAtTime(0.75, startTime + 0.28);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
-      
-      oscSaw.connect(compressor);
-      oscSq.connect(compressor);
-      compressor.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      
-      oscSaw.start(startTime);
-      oscSq.start(startTime);
-      
-      oscSaw.stop(startTime + 0.35);
-      oscSq.stop(startTime + 0.35);
-    };
+      const playBuzzerPulse = (startTime, freq) => {
+        const oscSaw = ctx.createOscillator();
+        const oscSq = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        // Pro Dynamics Compressor prevents iOS Webkit from compressing/silencing high amplitude peaks
+        const compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-24, startTime);
+        compressor.knee.setValueAtTime(30, startTime);
+        compressor.ratio.setValueAtTime(12, startTime);
+        compressor.attack.setValueAtTime(0.003, startTime);
+        compressor.release.setValueAtTime(0.25, startTime);
+        
+        oscSaw.type = "sawtooth"; // Rich bright high-frequency cutting harmonics
+        oscSaw.frequency.setValueAtTime(freq, startTime);
+        oscSaw.frequency.exponentialRampToValueAtTime(freq * 1.38, startTime + 0.35); // Sweeping siren chirp
+        
+        oscSq.type = "square"; // Penetrative, solid buzzer texture
+        oscSq.frequency.setValueAtTime(freq * 1.015, startTime); // Slightly detuned by 1.5% for an acoustic beating effect
+        oscSq.frequency.exponentialRampToValueAtTime(freq * 1.38 * 1.015, startTime + 0.35);
+        
+        // Piercing gain level (0.75 combined with compressor avoids triggering iOS protective limiter squashing)
+        gainNode.gain.setValueAtTime(0.001, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.75, startTime + 0.05); 
+        gainNode.gain.linearRampToValueAtTime(0.75, startTime + 0.28);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
+        
+        oscSaw.connect(compressor);
+        oscSq.connect(compressor);
+        compressor.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscSaw.start(startTime);
+        oscSq.start(startTime);
+        
+        oscSaw.stop(startTime + 0.35);
+        oscSq.stop(startTime + 0.35);
+      };
 
-    // Play a rhythmic sequence of 8 fast, double-chirping sweep sirens
-    // Standing out clearly above standard food-court conversations (950Hz to 1350Hz)
-    const sweeps = [950, 1150, 950, 1350, 950, 1150, 950, 1350];
-    sweeps.forEach((freq, index) => {
-      playBuzzerPulse(now + (index * 0.45), freq);
-    });
+      // Play a rhythmic sequence of 8 fast, double-chirping sweep sirens
+      // Standing out clearly above standard food-court conversations (950Hz to 1350Hz)
+      const sweeps = [950, 1150, 950, 1350, 950, 1150, 950, 1350];
+      sweeps.forEach((freq, index) => {
+        playBuzzerPulse(now + (index * 0.45), freq);
+      });
+    }
 
   } catch (e) {
     console.error("Audio alarm error:", e);
@@ -185,7 +259,19 @@ function startAudioKeepAlive(ctx) {
 
 function unlockAudio() {
   try {
-    // 1. Instantiate and resume Web AudioContext via user interaction
+    // 1. Initialize and preload the programmatic HTML5 Audio Buzzer blob URL
+    initBuzzerAudio();
+    if (iosBuzzerAudio) {
+      // Play and pause instantly inside the click handler to unlock the media audio session
+      iosBuzzerAudio.play().then(() => {
+        iosBuzzerAudio.pause();
+        iosBuzzerAudio.currentTime = 0;
+      }).catch(err => {
+        console.warn("Media buzzer unlock play failed:", err);
+      });
+    }
+
+    // 2. Instantiate and resume Web AudioContext via user interaction
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (AudioContext) {
       let ctx = iosAudioCtx;
@@ -212,14 +298,14 @@ function unlockAudio() {
       startAudioKeepAlive(ctx);
     }
     
-    // 2. Instantiate and speak a micro-silent utterance to unlock Speech Synthesis
+    // 3. Instantiate and speak a micro-silent utterance to unlock Speech Synthesis
     if (window.speechSynthesis) {
       const utterance = new SpeechSynthesisUtterance(" ");
       utterance.volume = 0;
       window.speechSynthesis.speak(utterance);
     }
     
-    console.log("🔊 iPhone Webkit Audio Context & Keep-Alive unlocked successfully!");
+    console.log("🔊 iPhone Webkit Audio Context, Looping Media Buzzer & Keep-Alive unlocked successfully!");
   } catch (e) {
     console.error("Failed to unlock iOS Webkit audio:", e);
   }
@@ -269,6 +355,15 @@ export default function ClientPage() {
     if (alarmIntervalRef.current) {
       clearInterval(alarmIntervalRef.current);
       alarmIntervalRef.current = null;
+    }
+    // Pause and reset the physical media buzzer audio!
+    if (iosBuzzerAudio) {
+      try {
+        iosBuzzerAudio.pause();
+        iosBuzzerAudio.currentTime = 0;
+      } catch (e) {
+        console.warn("Buzzer stop failed:", e);
+      }
     }
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
