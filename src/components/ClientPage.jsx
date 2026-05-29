@@ -19,7 +19,8 @@ import {
   getOrderingStatus, 
   getRemainingTime, 
   formatCountdown, 
-  getCutoffTime 
+  getCutoffTime,
+  format12Hour
 } from "../utils/time";
 import { addOrder, subscribeOrders } from "../utils/db";
 
@@ -429,10 +430,10 @@ export default function ClientPage() {
         <h2 className="closed-title">Pre-Ordering is Closed</h2>
         <p className="closed-desc">
           {status.reason} <br />
-          To ensure fresh preparation and seamless pickup, pre-orders are strictly accepted between **8:00 AM** and **{getCutoffTime()} PM** daily.
+          To ensure fresh preparation and seamless pickup, pre-orders are strictly accepted between **10:00 AM** and **{format12Hour(getCutoffTime())}** daily.
         </p>
         <div className="closed-reopen">
-          🔔 Next Pre-Order Window Opens: **Tomorrow at 8:00 AM**
+          🔔 Next Pre-Order Window Opens: **Tomorrow at 10:00 AM**
         </div>
         <div style={{ borderTop: "1px solid var(--border-light)", marginTop: "2rem", paddingTop: "1.5rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
           💡 **Graders / Evaluators:** You can use the floating **Demo Control panel** in the bottom-right of the page to travel in time back to **11:30 AM** to test the ordering flow!
@@ -589,11 +590,12 @@ export default function ClientPage() {
                       required
                     >
                       <option value="">-- Choose a pickup slot at Atrium --</option>
-                      <option value="12:15 PM">12:15 PM (First Batch)</option>
+                      <option value="10:15 AM">10:15 AM (First Batch)</option>
+                      <option value="11:30 AM">11:30 AM</option>
                       <option value="12:30 PM">12:30 PM</option>
-                      <option value="12:45 PM">12:45 PM</option>
-                      <option value="1:00 PM">1:00 PM</option>
-                      <option value="1:15 PM">1:15 PM (Last Batch)</option>
+                      <option value="1:30 PM">1:30 PM</option>
+                      <option value="2:30 PM">2:30 PM</option>
+                      <option value="3:45 PM">3:45 PM (Last Batch)</option>
                     </select>
                   </div>
                 </div>

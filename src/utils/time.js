@@ -3,8 +3,8 @@
  * Supports standard operations and simulated time travel.
  */
 
-// Cutoff default is 12:05 PM
-const DEFAULT_CUTOFF = "12:05";
+// Cutoff default is 4:00 PM (16:00)
+const DEFAULT_CUTOFF = "16:00";
 
 /**
  * Gets the current simulated or actual date object.
@@ -104,6 +104,18 @@ export function getOrderingStatus() {
  */
 export function formatTimeShort(date) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * Formats a "HH:MM" 24-hour string into "H:MM AM/PM"
+ */
+export function format12Hour(timeStr) {
+  if (!timeStr) return "";
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 || 12;
+  const displayMinutes = String(minutes).padStart(2, "0");
+  return `${displayHours}:${displayMinutes} ${ampm}`;
 }
 
 /**

@@ -28,7 +28,7 @@ import { getCutoffTime, setCutoffTime } from "../utils/time";
 export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [cutoffVal, setCutoffVal] = useState("12:05");
+  const [cutoffVal, setCutoffVal] = useState("16:00");
   const [forceStatus, setForceStatus] = useState("auto"); // 'auto', 'open', 'closed'
   // DuitNow TnG configurations
   const [tngNumber, setTngNumber] = useState("+601164188797");
