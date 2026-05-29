@@ -808,7 +808,7 @@ export default function ClientPage() {
                 onClick={handleNextStep}
                 disabled={currentStep === 1 && !soupBase || currentStep === 2 && totalSkewers === 0}
               >
-                Next Step <ChevronRight size={16} />
+                Next Step {totalSkewers > 0 && `(RM ${calculateTotal().toFixed(2)})`} <ChevronRight size={16} />
               </button>
             ) : (
               <button 
@@ -817,7 +817,7 @@ export default function ClientPage() {
                 disabled={isSubmitting || !custName.trim() || !custPhone.trim() || !pickupTime || (paymentMethod === "tng" && (!paymentRef.trim() || !paymentSlip))}
                 style={{ background: "var(--color-success)", color: "#ffffff", boxShadow: "0 4px 14px rgba(16, 185, 129, 0.25)" }}
               >
-                {isSubmitting ? "Locking in pre-order..." : "Confirm & Pre-Order! 🍢"}
+                {isSubmitting ? "Locking in pre-order..." : `Confirm & Pre-Order! (RM ${calculateTotal().toFixed(2)}) 🍢`}
               </button>
             )}
           </div>
