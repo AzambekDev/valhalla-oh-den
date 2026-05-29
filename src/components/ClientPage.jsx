@@ -66,48 +66,50 @@ function playCustomerChime() {
 
     // Trigger powerful tactile vibration pulses to physically shake the customer's phone!
     if (navigator.vibrate) {
-      // Vibrate 600ms, pause 200ms, vibrate 600ms, pause 200ms, vibrate 600ms (High attention pattern)
-      navigator.vibrate([600, 200, 600, 200, 600]);
+      // Extensive heavy high-intensity pattern: 800ms vibration, 150ms pause, repeated. (Total ~8.5 seconds)
+      navigator.vibrate([800, 150, 800, 150, 800, 150, 800, 150, 800, 150, 800, 150, 800, 150, 800]);
     }
 
-    // Play 4 high-intensity penetrative "Ring-Ring" sound pulses over 2.3 seconds
+    // Play high-intensity penetrative dual detuned buzzer siren pulses over 4.2 seconds
     const now = ctx.currentTime;
     
-    const playPulse = (startTime, freq) => {
-      // Create oscillator with a sharper wave type (triangle/square) for penetrative loud acoustics
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    const playBuzzerPulse = (startTime, freq) => {
+      // Create detuned dual oscillators (sawtooth + square) for a grating, metallic industrial alarm sound
+      const oscSaw = ctx.createOscillator();
+      const oscSq = ctx.createOscillator();
+      const gainNode = ctx.createGain();
       
-      osc.type = "triangle"; // Sharper and much louder than standard sine waves
-      osc.frequency.setValueAtTime(freq, startTime);
+      oscSaw.type = "sawtooth"; // Rich bright high-frequency cutting harmonics
+      oscSaw.frequency.setValueAtTime(freq, startTime);
+      oscSaw.frequency.exponentialRampToValueAtTime(freq * 1.38, startTime + 0.35); // Sweeping siren chirp
       
-      // Siren frequency sweep for maximum audio focus
-      osc.frequency.exponentialRampToValueAtTime(freq * 1.4, startTime + 0.45);
+      oscSq.type = "square"; // Penetrative, solid buzzer texture
+      oscSq.frequency.setValueAtTime(freq * 1.015, startTime); // Slightly detuned by 1.5% for an acoustic beating effect
+      oscSq.frequency.exponentialRampToValueAtTime(freq * 1.38 * 1.015, startTime + 0.35);
       
-      // Loud volume envelope (0.4 gain stands out exceptionally well)
-      gain.gain.setValueAtTime(0.001, startTime);
-      gain.gain.linearRampToValueAtTime(0.4, startTime + 0.05); 
-      gain.gain.linearRampToValueAtTime(0.4, startTime + 0.35);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.45);
+      // Piercing gain level (0.9 gain stands out extremely well, close to max digital ceiling)
+      gainNode.gain.setValueAtTime(0.001, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.9, startTime + 0.05); 
+      gainNode.gain.linearRampToValueAtTime(0.9, startTime + 0.28);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
       
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      oscSaw.connect(gainNode);
+      oscSq.connect(gainNode);
+      gainNode.connect(ctx.destination);
       
-      osc.start(startTime);
-      osc.stop(startTime + 0.45);
+      oscSaw.start(startTime);
+      oscSq.start(startTime);
+      
+      oscSaw.stop(startTime + 0.35);
+      oscSq.stop(startTime + 0.35);
     };
 
-    // Pulse 1 at 0s: 880Hz (A5)
-    playPulse(now, 880);
-    
-    // Pulse 2 at 0.6s: 987Hz (B5)
-    playPulse(now + 0.6, 987);
-    
-    // Pulse 3 at 1.2s: 880Hz (A5)
-    playPulse(now + 1.2, 880);
-
-    // Pulse 4 at 1.8s: 1174Hz (D6 - Ultra-high pitch climax)
-    playPulse(now + 1.8, 1174);
+    // Play a rhythmic sequence of 8 fast, double-chirping sweep sirens
+    // Standing out clearly above standard food-court conversations (950Hz to 1350Hz)
+    const sweeps = [950, 1150, 950, 1350, 950, 1150, 950, 1350];
+    sweeps.forEach((freq, index) => {
+      playBuzzerPulse(now + (index * 0.45), freq);
+    });
 
   } catch (e) {
     console.error("Audio alarm error:", e);
@@ -124,12 +126,12 @@ function announceOrderReady(orderId, customerName) {
     
     // Aligned ticketing shortcode (First 8 characters of UUID)
     const shortId = orderId.slice(0, 8).toUpperCase().split("").join(" "); // Space out characters for clear phonetic read (e.g. A B C D)
-    const alertMsg = `Attention ${customerName}! Your hot oden bowl is ready! I repeat, Ticket number ${shortId} is cooked and packaged for pickup at the Atrium counter! Please collect your steaming oden bowl now.`;
+    const alertMsg = `Attention ${customerName}! Your hot oden bowl is ready for pickup! Ticket number: ${shortId}. I repeat, ticket number: ${shortId} is cooked and packaged at the APU Atrium counter. Please collect your steaming oden bowl now.`;
     
     const utterance = new SpeechSynthesisUtterance(alertMsg);
     utterance.rate = 0.82;   // Slower rate so background noise doesn't wash out details
-    utterance.pitch = 1.15;  // Slightly higher pitch stands out better against crowd chatter
-    utterance.volume = 1.0;   // Maximum hardware volume
+    utterance.pitch = 1.2;   // Higher pitch stands out better against crowd chatter
+    utterance.volume = 1.0;  // Maximum hardware volume
     
     window.speechSynthesis.speak(utterance);
   } catch (e) {
@@ -184,6 +186,58 @@ export default function ClientPage() {
   const [activeReceiptId, setActiveReceiptId] = useState(null);
   const [activeOrder, setActiveOrder] = useState(null);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+
+  // Repeating Alarm System for Heavy APU Crowds
+  const [isAlarmActive, setIsAlarmActive] = useState(false);
+  const alarmIntervalRef = useRef(null);
+
+  const startHeavyAlarm = (orderId, customerName) => {
+    // Stop any existing timers to prevent overlapping loops
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+    }
+    
+    setIsAlarmActive(true);
+    
+    // Play immediately on trigger
+    playCustomerChime();
+    announceOrderReady(orderId, customerName);
+    
+    let cycleCount = 1;
+    // Repeat the penetrative buzzer siren and voice alert every 5.5 seconds (siren takes 4.2s)
+    alarmIntervalRef.current = setInterval(() => {
+      if (cycleCount >= 6) { // Run for up to 6 cycles (~33 seconds)
+        stopHeavyAlarm();
+        return;
+      }
+      playCustomerChime();
+      announceOrderReady(orderId, customerName);
+      cycleCount++;
+    }, 5500);
+  };
+
+  const stopHeavyAlarm = () => {
+    setIsAlarmActive(false);
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  };
+
+  // Clean up alarm loops on component unmount
+  useEffect(() => {
+    return () => {
+      if (alarmIntervalRef.current) {
+        clearInterval(alarmIntervalRef.current);
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   // iOS silent audio engine unlock listener
   useEffect(() => {
@@ -319,8 +373,12 @@ export default function ClientPage() {
         const isPingTriggered = prevPingCountRef.current !== undefined && match.ping_count > prevPingCountRef.current && match.status === "ready";
 
         if (isStatusTransition || isPingTriggered) {
-          playCustomerChime();
-          announceOrderReady(match.id, match.customer_name);
+          startHeavyAlarm(match.id, match.customer_name);
+        }
+
+        // Proactively stop the alarm if the order is marked complete / handed over by the worker
+        if (match.status !== "ready") {
+          stopHeavyAlarm();
         }
 
         prevStatusRef.current = match.status;
@@ -482,6 +540,29 @@ export default function ClientPage() {
   if (activeReceiptId && activeOrder) {
     return (
       <div className="receipt-wrapper" style={{ animation: "slideUp 0.4s ease" }}>
+        
+        {/* Fullscreen Flashing Emergency Warning Overlay */}
+        {isAlarmActive && (
+          <div className="alarm-warning-overlay">
+            <div className="alarm-warning-box">
+              <div className="alarm-warning-icon">🔔🔥</div>
+              <h2 className="alarm-warning-title">YOUR ODEN IS READY!</h2>
+              <p className="alarm-warning-text">
+                Ticket <span className="alarm-warning-ticket">#{activeOrder.id.slice(0, 8).toUpperCase()}</span> is fresh, piping hot, and packaged for pickup at the APU Atrium Counter!
+              </p>
+              <div className="alarm-warning-subtext">
+                🔊 A loud alert siren is playing and your phone is vibrating. Please collect your steaming oden bowl now!
+              </div>
+              <button 
+                onClick={stopHeavyAlarm}
+                className="alarm-dismiss-btn"
+              >
+                🔕 Mute & Dismiss Alarm
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="receipt-card">
           <div className="receipt-header">
             <img 
