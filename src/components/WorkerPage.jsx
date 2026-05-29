@@ -4,7 +4,6 @@ import {
   Clock, 
   Bell, 
   Check, 
-  Printer, 
   Phone, 
   Inbox, 
   Image,
@@ -51,7 +50,6 @@ function playKitchenChime() {
 
 export default function WorkerPage() {
   const [orders, setOrders] = useState([]);
-  const [selectedPrintOrder, setSelectedPrintOrder] = useState(null);
   const [activeReceiptOrder, setActiveReceiptOrder] = useState(null); // Modal viewer order
   const prevOrdersCountRef = useRef(0);
   const initialLoadRef = useRef(true);
@@ -93,12 +91,7 @@ export default function WorkerPage() {
     playKitchenChime();
   };
 
-  const handlePrint = (order) => {
-    setSelectedPrintOrder(order);
-    setTimeout(() => {
-      window.print();
-    }, 100);
-  };
+
 
   const pendingOrders = orders.filter(o => o.status === "pending");
   const preparingOrders = orders.filter(o => o.status === "preparing");
@@ -223,17 +216,11 @@ export default function WorkerPage() {
                       <button 
                         className="order-action-btn btn-cook"
                         onClick={() => handleStatusChange(order.id, "preparing")}
+                        style={{ flex: 1 }}
                       >
                         <Flame size={12} /> Start Prep
                       </button>
                     )}
-                    <button 
-                      className="order-action-btn btn-print"
-                      onClick={() => handlePrint(order)}
-                      title="Print order kitchen slip"
-                    >
-                      <Printer size={12} />
-                    </button>
                   </div>
                 </div>
               ))
@@ -315,15 +302,9 @@ export default function WorkerPage() {
                     <button 
                       className="order-action-btn btn-ready"
                       onClick={() => handleStatusChange(order.id, "ready")}
+                      style={{ flex: 1 }}
                     >
                       <Bell size={12} /> Pack & Ready
-                    </button>
-                    <button 
-                      className="order-action-btn btn-print"
-                      onClick={() => handlePrint(order)}
-                      title="Print order slip"
-                    >
-                      <Printer size={12} />
                     </button>
                   </div>
                 </div>
@@ -419,15 +400,6 @@ export default function WorkerPage() {
                     >
                       🔔 Re-Ping
                     </button>
-
-                    <button 
-                      className="order-action-btn btn-print"
-                      onClick={() => handlePrint(order)}
-                      title="Print order slip"
-                      style={{ padding: "0.25rem 0.4rem" }}
-                    >
-                      <Printer size={12} />
-                    </button>
                   </div>
                 </div>
               ))
@@ -491,16 +463,7 @@ export default function WorkerPage() {
                     ))}
                   </div>
 
-                  <div className="order-card-footer">
-                    <button 
-                      className="order-action-btn btn-print"
-                      onClick={() => handlePrint(order)}
-                      title="Reprint order slip"
-                      style={{ maxWidth: "100%" }}
-                    >
-                      <Printer size={12} /> Reprint Ticket
-                    </button>
-                  </div>
+
                 </div>
               ))
             )}
@@ -574,65 +537,7 @@ export default function WorkerPage() {
               >
                 Close & Confirm Verification
               </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* Hidden Thermal Printer Slip Mock Element (Visible only during window.print()) */}
-      {selectedPrintOrder && (
-        <div style={{ display: "none" }}>
-          <div className="receipt-card">
-            <div className="receipt-header">
-              <img 
-                src="/logo.jpg" 
-                alt="Valhalla Oh-Den! Logo" 
-                style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid #000000", margin: "0 auto 0.25rem auto", display: "block" }}
-              />
-              <div className="receipt-shop-name">VALHALLA OH-DEN! (KITCHEN)</div>
-              <div style={{ fontSize: "0.8rem", fontWeight: "bold" }}>-- PRE-ORDER SLIP --</div>
-              <div className="receipt-number" style={{ fontSize: "1.25rem", fontWeight: 900, wordBreak: "break-all", fontFamily: "monospace", display: "block", width: "100%", textAlign: "center", background: "#f0edea", padding: "0.4rem 0.75rem", borderRadius: "8px" }}>
-                #{selectedPrintOrder.id.slice(0, 8).toUpperCase()}
-              </div>
-              <div style={{ fontSize: "0.6rem", color: "#888888", fontFamily: "monospace", marginTop: "0.25rem", wordBreak: "break-all" }}>
-                Precise ID: {selectedPrintOrder.id}
-              </div>
-            </div>
-            
-            <div className="receipt-meta">
-              <div className="receipt-meta-row">
-                <span>Customer:</span>
-                <span>{selectedPrintOrder.customer_name}</span>
-              </div>
-              <div className="receipt-meta-row">
-                <span>Payment:</span>
-                <span style={{ textTransform: "uppercase", fontWeight: "bold" }}>
-                  {selectedPrintOrder.payment_method === "tng" ? `TnG (Ref: ${selectedPrintOrder.payment_ref.slice(-4)})` : "Cash on Pickup"}
-                </span>
-              </div>
-              <div className="receipt-meta-row">
-                <span>Pickup Slot:</span>
-                <span style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{selectedPrintOrder.pickup_time}</span>
-              </div>
-            </div>
-
-            <div className="receipt-items">
-              <div style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>
-                🍲 Broth: {selectedPrintOrder.soup_base} Base
-              </div>
-              {Object.keys(selectedPrintOrder.items).map(name => (
-                <div className="receipt-item-row" key={name}>
-                  <span className="receipt-item-name" style={{ fontSize: "1.1rem" }}>{name}</span>
-                  <span className="receipt-item-qty" style={{ fontSize: "1.2rem", fontWeight: "bold" }}>x{selectedPrintOrder.items[name]}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="receipt-barcode">
-              <div className="barcode-stripes"></div>
-              <div className="barcode-text">{selectedPrintOrder.id}</div>
-            </div>
+                  </div>
           </div>
         </div>
       )}
