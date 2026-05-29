@@ -59,7 +59,10 @@ function playCustomerChime() {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
-    const ctx = new AudioContext();
+    const ctx = iosAudioCtx || new AudioContext();
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
     
     // Play a lovely double-tone high melody
     const osc1 = ctx.createOscillator();
@@ -108,6 +111,44 @@ function announceOrderReady(orderId, customerName) {
   }
 }
 
+// iPhone/iOS Webkit Audio Context unlock helper
+let iosAudioCtx = null;
+
+function unlockAudio() {
+  try {
+    // 1. Instantiate and resume Web AudioContext via user interaction
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      const ctx = new AudioContext();
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+      
+      // Play a quick micro-silent oscillator
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.05);
+      
+      iosAudioCtx = ctx;
+    }
+    
+    // 2. Instantiate and speak a micro-silent utterance to unlock Speech Synthesis
+    if (window.speechSynthesis) {
+      const utterance = new SpeechSynthesisUtterance(" ");
+      utterance.volume = 0;
+      window.speechSynthesis.speak(utterance);
+    }
+    
+    console.log("🔊 iPhone Webkit Audio Context & SpeechSynthesis unlocked successfully!");
+  } catch (e) {
+    console.error("Failed to unlock iOS Webkit audio:", e);
+  }
+}
+
 export default function ClientPage() {
   const prevStatusRef = useRef(null);
   const prevPingCountRef = useRef(0);
@@ -116,6 +157,32 @@ export default function ClientPage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [activeReceiptId, setActiveReceiptId] = useState(null);
   const [activeOrder, setActiveOrder] = useState(null);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+
+  // iOS silent audio engine unlock listener
+  useEffect(() => {
+    const handleGesture = () => {
+      unlockAudio();
+      setIsAudioEnabled(true);
+      
+      // Clean up event listeners immediately once unlocked
+      document.removeEventListener("click", handleGesture);
+      document.removeEventListener("touchstart", handleGesture);
+    };
+
+    document.addEventListener("click", handleGesture);
+    document.addEventListener("touchstart", handleGesture);
+
+    return () => {
+      document.removeEventListener("click", handleGesture);
+      document.removeEventListener("touchstart", handleGesture);
+    };
+  }, []);
+
+  const handleEnableAudio = () => {
+    unlockAudio();
+    setIsAudioEnabled(true);
+  };
   
   // Pre-order Stepper Form State with Memory Persistence
   const [soupBase, setSoupBase] = useState(() => {
@@ -420,6 +487,24 @@ export default function ClientPage() {
                 {activeOrder.status === "completed" && "Completed / Handed Over"}
               </span>
             </div>
+
+            {/* iOS/iPhone Audio Notification unlocking status alert */}
+            <div style={{ marginTop: "0.75rem" }}>
+              {!isAudioEnabled ? (
+                <button 
+                  onClick={handleEnableAudio}
+                  className="btn btn-secondary animate-pulse"
+                  style={{ width: "100%", margin: "0 auto", background: "rgba(242, 161, 38, 0.08)", border: "1px dashed var(--accent-gold)", color: "var(--accent-gold)", fontSize: "0.7rem", height: "34px", padding: "0 0.5rem", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", fontWeight: "bold", cursor: "pointer" }}
+                  title="Enable browser audio and speech voice for remote kitchen pings"
+                >
+                  🔊 Enable Live Sound Alerts
+                </button>
+              ) : (
+                <div style={{ width: "100%", margin: "0 auto", background: "rgba(52, 211, 153, 0.08)", border: "1px solid var(--color-success)", color: "var(--color-success)", fontSize: "0.7rem", height: "34px", padding: "0 0.5rem", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.25rem", fontWeight: "bold" }}>
+                  ✓ Audio Alerts Enabled 🔊
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="receipt-meta">
@@ -560,19 +645,6 @@ export default function ClientPage() {
       {/* Stepper Wizard Form */}
       <div>
         <div className="client-hero">
-          {/* Cozy Simmering Viking Hearth Pot */}
-          <div className="hearth-pot-container">
-            <div className="steam-emitter">
-              <div className="steam-vapor"></div>
-              <div className="steam-vapor"></div>
-              <div className="steam-vapor"></div>
-              <div className="steam-vapor"></div>
-            </div>
-            <div className={`hearth-broth ${soupBase === "Tom-Yum" ? "tom-yum" : soupBase === "Kimchi" ? "kimchi" : "default"}`}></div>
-            <div className="hearth-pot"></div>
-            <div className="hearth-fire"></div>
-          </div>
-
           <h1>🍢 Customize Your Oden Bowl</h1>
           <p>Select your favorite soup stock, build your combination of premium skewers, and pick it up fresh at our stall!</p>
           
