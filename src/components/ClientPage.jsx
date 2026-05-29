@@ -427,7 +427,7 @@ export default function ClientPage() {
             {activeOrder.payment_method === "tng" && (
               <div className="receipt-meta-row">
                 <span className="receipt-meta-label">Ref ID:</span>
-                <span className="receipt-meta-val" style={{ fontFamily: "monospace", fontSize: "0.8rem" }}>{activeOrder.payment_ref}</span>
+                <span className="receipt-meta-val" style={{ fontFamily: "monospace", fontSize: "0.8rem", wordBreak: "break-all", textAlign: "right", marginLeft: "1rem" }}>{activeOrder.payment_ref}</span>
               </div>
             )}
           </div>

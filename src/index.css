@@ -51,11 +51,19 @@
   -webkit-font-smoothing: antialiased;
 }
 
+html {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
 body {
   background-color: var(--bg-main);
   color: var(--color-text-main);
   line-height: 1.5;
   overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
   background-image: 
     radial-gradient(circle at 10% 20%, rgba(242, 76, 38, 0.03) 0%, transparent 40%),
     radial-gradient(circle at 90% 80%, rgba(242, 161, 38, 0.03) 0%, transparent 40%);
@@ -84,6 +92,9 @@ body {
   display: flex;
   flex-direction: column;
   padding-bottom: 60px; /* Space for the floating dev panel */
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
 }
 
 /* Premium Header Bar */
@@ -515,6 +526,9 @@ body {
   font-size: 0.95rem;
   transition: var(--transition-fast);
   outline: none;
+  width: 100%;
+  min-width: 0; /* Flexbox Minimum Width Trap Fix */
+  box-sizing: border-box;
 }
 
 .form-input:focus {
