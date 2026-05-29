@@ -54,7 +54,7 @@ const SOUP_DETAILS = {
   }
 };
 
-// Web Audio chime for customer alert
+// Web Audio sharp, loud alarm siren for customer alert (optimized for noisy environments like APU Atrium)
 function playCustomerChime() {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -63,35 +63,58 @@ function playCustomerChime() {
     if (ctx.state === "suspended") {
       ctx.resume();
     }
+
+    // Trigger powerful tactile vibration pulses to physically shake the customer's phone!
+    if (navigator.vibrate) {
+      // Vibrate 600ms, pause 200ms, vibrate 600ms, pause 200ms, vibrate 600ms (High attention pattern)
+      navigator.vibrate([600, 200, 600, 200, 600]);
+    }
+
+    // Play 4 high-intensity penetrative "Ring-Ring" sound pulses over 2.3 seconds
+    const now = ctx.currentTime;
     
-    // Play a lovely double-tone high melody
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = "sine";
-    osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-    gain1.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start();
-    osc1.stop(ctx.currentTime + 0.3);
+    const playPulse = (startTime, freq) => {
+      // Create oscillator with a sharper wave type (triangle/square) for penetrative loud acoustics
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = "triangle"; // Sharper and much louder than standard sine waves
+      osc.frequency.setValueAtTime(freq, startTime);
+      
+      // Siren frequency sweep for maximum audio focus
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.4, startTime + 0.45);
+      
+      // Loud volume envelope (0.4 gain stands out exceptionally well)
+      gain.gain.setValueAtTime(0.001, startTime);
+      gain.gain.linearRampToValueAtTime(0.4, startTime + 0.05); 
+      gain.gain.linearRampToValueAtTime(0.4, startTime + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.45);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(startTime);
+      osc.stop(startTime + 0.45);
+    };
+
+    // Pulse 1 at 0s: 880Hz (A5)
+    playPulse(now, 880);
     
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = "sine";
-    osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15); // E5
-    gain2.gain.setValueAtTime(0.1, ctx.currentTime + 0.15);
-    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(ctx.currentTime + 0.15);
-    osc2.stop(ctx.currentTime + 0.55);
+    // Pulse 2 at 0.6s: 987Hz (B5)
+    playPulse(now + 0.6, 987);
+    
+    // Pulse 3 at 1.2s: 880Hz (A5)
+    playPulse(now + 1.2, 880);
+
+    // Pulse 4 at 1.8s: 1174Hz (D6 - Ultra-high pitch climax)
+    playPulse(now + 1.8, 1174);
+
   } catch (e) {
-    console.error("Audio chime error:", e);
+    console.error("Audio alarm error:", e);
   }
 }
 
-// Text-to-speech voice announcer
+// Text-to-speech voice announcer (optimized for noisy background environments)
 function announceOrderReady(orderId, customerName) {
   try {
     if (!window.speechSynthesis) return;
@@ -99,11 +122,14 @@ function announceOrderReady(orderId, customerName) {
     // Cancel any active speech to avoid overlaps
     window.speechSynthesis.cancel();
     
-    const text = `Order ${orderId.replace("-", " ")} for ${customerName} is ready for pickup at the APU Atrium!`;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.05;
-    utterance.volume = 1.0;
+    // Aligned ticketing shortcode (First 8 characters of UUID)
+    const shortId = orderId.slice(0, 8).toUpperCase().split("").join(" "); // Space out characters for clear phonetic read (e.g. A B C D)
+    const alertMsg = `Attention ${customerName}! Your hot oden bowl is ready! I repeat, Ticket number ${shortId} is cooked and packaged for pickup at the Atrium counter! Please collect your steaming oden bowl now.`;
+    
+    const utterance = new SpeechSynthesisUtterance(alertMsg);
+    utterance.rate = 0.82;   // Slower rate so background noise doesn't wash out details
+    utterance.pitch = 1.15;  // Slightly higher pitch stands out better against crowd chatter
+    utterance.volume = 1.0;   // Maximum hardware volume
     
     window.speechSynthesis.speak(utterance);
   } catch (e) {
