@@ -12,7 +12,7 @@ import {
   QrCode,
   X 
 } from "lucide-react";
-import { subscribeOrders, updateOrderStatus } from "../utils/db";
+import { subscribeOrders, updateOrderStatus, pingCustomer } from "../utils/db";
 
 // Browser Synthetic "Ding-Dong" bell to avoid external asset dependency
 function playKitchenChime() {
@@ -76,6 +76,15 @@ export default function WorkerPage() {
       await updateOrderStatus(orderId, newStatus);
     } catch (e) {
       alert("Failed to update status. Please try again.");
+    }
+  };
+
+  const handlePingCustomer = async (order) => {
+    try {
+      await pingCustomer(order.id, order.ping_count);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to trigger remote customer reminder ping.");
     }
   };
 
@@ -392,17 +401,29 @@ export default function WorkerPage() {
                     <Clock size={13} /> Pickup: {order.pickup_time}
                   </div>
 
-                  <div className="order-card-footer">
+                  <div className="order-card-footer" style={{ gap: "0.25rem" }}>
                     <button 
                       className="order-action-btn btn-complete"
                       onClick={() => handleStatusChange(order.id, "completed")}
+                      style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", flex: 1 }}
                     >
                       <Check size={12} /> Hand Over
                     </button>
+                    
+                    <button 
+                      className="order-action-btn"
+                      onClick={() => handlePingCustomer(order)}
+                      style={{ background: "var(--accent-gold)", color: "var(--bg-main)", padding: "0.25rem 0.5rem", fontSize: "0.75rem", fontWeight: "bold", flex: 1.3 }}
+                      title="Remind customer / ring alert bell"
+                    >
+                      🔔 Re-Ping
+                    </button>
+
                     <button 
                       className="order-action-btn btn-print"
                       onClick={() => handlePrint(order)}
                       title="Print order slip"
+                      style={{ padding: "0.25rem 0.4rem" }}
                     >
                       <Printer size={12} />
                     </button>

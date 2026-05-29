@@ -110,6 +110,7 @@ function announceOrderReady(orderId, customerName) {
 
 export default function ClientPage() {
   const prevStatusRef = useRef(null);
+  const prevPingCountRef = useRef(0);
   const [currentStep, setCurrentStep] = useState(1);
   const [status, setStatus] = useState({ isOpen: true, reason: "" });
   const [timeLeft, setTimeLeft] = useState(0);
@@ -184,18 +185,23 @@ export default function ClientPage() {
     if (!activeReceiptId) {
       setActiveOrder(null);
       prevStatusRef.current = null;
+      prevPingCountRef.current = 0;
       return;
     }
 
     const unsubscribe = subscribeOrders((orders) => {
       const match = orders.find(o => o.id === activeReceiptId);
       if (match) {
-        // Trigger background voice and chime alerts on transition to "ready"
-        if (prevStatusRef.current !== null && prevStatusRef.current !== "ready" && match.status === "ready") {
+        const isStatusTransition = prevStatusRef.current !== null && prevStatusRef.current !== "ready" && match.status === "ready";
+        const isPingTriggered = prevPingCountRef.current !== undefined && match.ping_count > prevPingCountRef.current && match.status === "ready";
+
+        if (isStatusTransition || isPingTriggered) {
           playCustomerChime();
           announceOrderReady(match.id, match.customer_name);
         }
+
         prevStatusRef.current = match.status;
+        prevPingCountRef.current = match.ping_count || 0;
         setActiveOrder(match);
       }
     });

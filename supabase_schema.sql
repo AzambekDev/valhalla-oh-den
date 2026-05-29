@@ -17,6 +17,7 @@ CREATE TABLE public.orders (
     payment_method TEXT NOT NULL DEFAULT 'cash',
     payment_ref TEXT NOT NULL DEFAULT '',
     payment_slip TEXT, -- Base64 encoded screenshot success slip image
+    ping_count INTEGER NOT NULL DEFAULT 0, -- Counter to trigger remote customer browser audio chimes
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

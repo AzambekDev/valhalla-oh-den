@@ -224,6 +224,31 @@ export async function clearOrders() {
   return true;
 }
 
+export async function pingCustomer(orderId, currentCount) {
+  const nextCount = (currentCount || 0) + 1;
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .update({ ping_count: nextCount })
+        .eq("id", orderId)
+        .select();
+      if (error) throw error;
+      return data[0];
+    } catch (e) {
+      console.error("Supabase pingCustomer error, falling back to local:", e);
+    }
+  }
+
+  const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+  const updatedOrders = orders.map(o => o.id === orderId ? { ...o, ping_count: nextCount } : o);
+  localStorage.setItem("oden_orders", JSON.stringify(updatedOrders));
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new Event("oden_db_update"));
+  return updatedOrders.find(o => o.id === orderId);
+}
+
 export function subscribeOrders(callback) {
   let active = true;
 
