@@ -117,14 +117,35 @@ export default function ClientPage() {
   const [activeReceiptId, setActiveReceiptId] = useState(null);
   const [activeOrder, setActiveOrder] = useState(null);
   
-  // Pre-order Stepper Form State
-  const [soupBase, setSoupBase] = useState("");
-  const [skewerQty, setSkewerQty] = useState({
-    "Cheese Tofu": 0,
-    "Fish Sandwich": 0,
-    "Seafood Tofu": 0,
-    "Fish Ball": 0,
-    "Seafood Beancurd Roll": 0
+  // Pre-order Stepper Form State with Memory Persistence
+  const [soupBase, setSoupBase] = useState(() => {
+    try {
+      const saved = localStorage.getItem("valhalla_cached_soup");
+      return saved || "";
+    } catch (e) {
+      return "";
+    }
+  });
+
+  const [skewerQty, setSkewerQty] = useState(() => {
+    try {
+      const saved = localStorage.getItem("valhalla_cached_skewers");
+      return saved ? JSON.parse(saved) : {
+        "Cheese Tofu": 0,
+        "Fish Sandwich": 0,
+        "Seafood Tofu": 0,
+        "Fish Ball": 0,
+        "Seafood Beancurd Roll": 0
+      };
+    } catch (e) {
+      return {
+        "Cheese Tofu": 0,
+        "Fish Sandwich": 0,
+        "Seafood Tofu": 0,
+        "Fish Ball": 0,
+        "Seafood Beancurd Roll": 0
+      };
+    }
   });
   const [custName, setCustName] = useState("");
   const [custPhone, setCustPhone] = useState("");
@@ -179,6 +200,15 @@ export default function ClientPage() {
       window.removeEventListener("storage", handleStorage);
     };
   }, [activeReceiptId]);
+
+  // Auto-persist cart selections to localStorage
+  useEffect(() => {
+    localStorage.setItem("valhalla_cached_soup", soupBase);
+  }, [soupBase]);
+
+  useEffect(() => {
+    localStorage.setItem("valhalla_cached_skewers", JSON.stringify(skewerQty));
+  }, [skewerQty]);
 
   // Subscribe to updates for the active order to show real-time status changes
   useEffect(() => {
@@ -319,6 +349,8 @@ export default function ClientPage() {
       const submittedOrder = await addOrder(orderData);
       localStorage.setItem("oden_active_receipt_id", submittedOrder.id);
       setActiveReceiptId(submittedOrder.id);
+      localStorage.removeItem("valhalla_cached_soup");
+      localStorage.removeItem("valhalla_cached_skewers");
     } catch (error) {
       console.error(error);
       alert("Order submission failed. Please try again.");
@@ -347,6 +379,8 @@ export default function ClientPage() {
       setPaymentRef("");
       setPaymentSlip(null);
       setSlipFileName("");
+      localStorage.removeItem("valhalla_cached_soup");
+      localStorage.removeItem("valhalla_cached_skewers");
       setCurrentStep(1);
     }
   };
@@ -526,6 +560,19 @@ export default function ClientPage() {
       {/* Stepper Wizard Form */}
       <div>
         <div className="client-hero">
+          {/* Cozy Simmering Viking Hearth Pot */}
+          <div className="hearth-pot-container">
+            <div className="steam-emitter">
+              <div className="steam-vapor"></div>
+              <div className="steam-vapor"></div>
+              <div className="steam-vapor"></div>
+              <div className="steam-vapor"></div>
+            </div>
+            <div className={`hearth-broth ${soupBase === "Tom-Yum" ? "tom-yum" : soupBase === "Kimchi" ? "kimchi" : "default"}`}></div>
+            <div className="hearth-pot"></div>
+            <div className="hearth-fire"></div>
+          </div>
+
           <h1>🍢 Customize Your Oden Bowl</h1>
           <p>Select your favorite soup stock, build your combination of premium skewers, and pick it up fresh at our stall!</p>
           

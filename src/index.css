@@ -2086,3 +2086,154 @@ select.form-input {
     font-size: 1.15rem;
   }
 }
+
+/* ==========================================================================
+   🍢 COZY VIKING HEARTH POT & STEAM ANIMATIONS
+   ========================================================================== */
+.hearth-pot-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1.5rem auto 1rem auto;
+  position: relative;
+  width: 140px;
+  height: 120px;
+}
+
+/* Simmering Hearth Fire flickers underneath */
+.hearth-fire {
+  position: absolute;
+  bottom: 12px;
+  width: 50px;
+  height: 24px;
+  background: radial-gradient(circle at center, #f59e0b 20%, #ef4444 70%, transparent 100%);
+  filter: blur(2px);
+  border-radius: 50% 50% 0 0;
+  animation: flameFlicker 0.2s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+@keyframes flameFlicker {
+  0% { transform: scaleX(0.9) scaleY(0.95); opacity: 0.8; }
+  100% { transform: scaleX(1.1) scaleY(1.05); opacity: 1; filter: blur(1px) drop-shadow(0 0 4px #ef4444); }
+}
+
+/* Sturdy Cast-Iron Boiling Oden Pot */
+.hearth-pot {
+  width: 100px;
+  height: 60px;
+  background: linear-gradient(135deg, #2a2521 0%, #1c1815 100%);
+  border: 4px solid #332d29;
+  border-bottom-width: 6px;
+  border-radius: 0 0 35px 35px;
+  position: absolute;
+  bottom: 20px;
+  z-index: 2;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6), inset 0 -4px 10px rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+/* Pot Handles */
+.hearth-pot::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 10px;
+  width: 12px;
+  height: 16px;
+  border: 3.5px solid #332d29;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+}
+.hearth-pot::after {
+  content: '';
+  position: absolute;
+  right: -12px;
+  top: 10px;
+  width: 12px;
+  height: 16px;
+  border: 3.5px solid #332d29;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+}
+
+/* Boiling Broth inside Pot (Glows dynamically based on selected soup!) */
+.hearth-broth {
+  width: 92px;
+  height: 12px;
+  background: radial-gradient(circle at center, rgba(242, 161, 38, 0.4) 0%, transparent 80%);
+  border-radius: 50%;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  margin: 0 auto;
+  border-bottom: 2.5px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.15);
+  transition: all 0.5s ease;
+  z-index: 3;
+}
+
+/* Broth selections */
+.hearth-broth.tom-yum {
+  background: radial-gradient(circle at center, #ef4444 30%, #b91c1c 80%);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.8), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+
+.hearth-broth.kimchi {
+  background: radial-gradient(circle at center, #f59e0b 30%, #d97706 80%);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.8), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+
+.hearth-broth.default {
+  background: radial-gradient(circle at center, #78716c 20%, #44403c 80%);
+}
+
+/* Rising Cozy Hearth Steam Emitter and Vapor waves */
+.steam-emitter {
+  position: absolute;
+  top: 15px;
+  width: 80px;
+  height: 30px;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 10px;
+  z-index: 4;
+}
+
+.steam-vapor {
+  width: 3px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.22);
+  filter: blur(2px);
+  border-radius: 50%;
+  animation: steamRise 2s infinite ease-out;
+  opacity: 0;
+}
+
+.steam-vapor:nth-child(1) { animation-delay: 0.1s; }
+.steam-vapor:nth-child(2) { animation-delay: 0.8s; }
+.steam-vapor:nth-child(3) { animation-delay: 0.4s; }
+.steam-vapor:nth-child(4) { animation-delay: 1.2s; }
+
+@keyframes steamRise {
+  0% {
+    transform: translateY(15px) translateX(0) scaleX(1) scaleY(1);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.7;
+    transform: translateY(0px) translateX(-2px) scaleX(1.5) scaleY(1.2);
+  }
+  60% {
+    opacity: 0.4;
+    transform: translateY(-12px) translateX(2px) scaleX(2.5) scaleY(1.4);
+  }
+  100% {
+    transform: translateY(-24px) translateX(-4px) scaleX(3) scaleY(1);
+    opacity: 0;
+    filter: blur(4px);
+  }
+}

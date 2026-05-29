@@ -245,6 +245,42 @@ export default function AdminPage() {
     document.body.removeChild(link);
   };
 
+  const exportTodayCSV = () => {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const todayOrders = orders.filter(o => {
+      const orderDate = new Date(o.created_at).toISOString().split("T")[0];
+      return orderDate === todayStr;
+    });
+
+    if (todayOrders.length === 0) {
+      alert("No order data recorded for today yet!");
+      return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Order ID,Customer Name,Phone,Soup Base,Cheese Tofu,Fish Sandwich,Seafood Tofu,Fish Ball,Seafood Beancurd Roll,Total Price ($),Pickup Slot,Payment Method,Payment Ref,Status,Created At\n";
+
+    todayOrders.forEach(o => {
+      const cheese = o.items["Cheese Tofu"] || 0;
+      const sandwich = o.items["Fish Sandwich"] || 0;
+      const seaTofu = o.items["Seafood Tofu"] || 0;
+      const ball = o.items["Fish Ball"] || 0;
+      const roll = o.items["Seafood Beancurd Roll"] || 0;
+      const cleanPhone = o.phone.replace(/,/g, ""); 
+      const cleanName = o.customer_name.replace(/,/g, "");
+
+      csvContent += `${o.id},${cleanName},${cleanPhone},${o.soup_base},${cheese},${sandwich},${seaTofu},${ball},${roll},${parseFloat(o.total_price).toFixed(2)},${o.pickup_time},${o.payment_method.toUpperCase()},${o.payment_ref || "N/A"},${o.status},${o.created_at}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `oden_today_sales_${todayStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const filteredOrders = orders.filter(o => {
     return o.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
            o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -584,14 +620,22 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="table-actions">
+          <div className="table-actions" style={{ display: "flex", gap: "0.5rem" }}>
+            <button 
+              className="btn btn-secondary"
+              onClick={exportTodayCSV}
+              style={{ padding: "0.55rem 1rem", fontSize: "0.85rem", gap: "0.35rem", borderColor: "var(--accent-gold)", color: "var(--accent-gold)" }}
+              title="Download daily sales spreadsheet for 4:00 PM accounting"
+            >
+              <Download size={14} /> Daily Sales (Today)
+            </button>
             <button 
               className="btn btn-secondary"
               onClick={exportToCSV}
               style={{ padding: "0.55rem 1rem", fontSize: "0.85rem", gap: "0.35rem" }}
-              title="Download pre-orders spreadsheet for Excel"
+              title="Download all pre-orders spreadsheet for Excel"
             >
-              <Download size={14} /> Export CSV
+              <Download size={14} /> Export All CSV
             </button>
           </div>
         </div>
