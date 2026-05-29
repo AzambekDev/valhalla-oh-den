@@ -592,7 +592,12 @@ export default function WorkerPage() {
               />
               <div className="receipt-shop-name">VALHALLA OH-DEN! (KITCHEN)</div>
               <div style={{ fontSize: "0.8rem", fontWeight: "bold" }}>-- PRE-ORDER SLIP --</div>
-              <div className="receipt-number">{selectedPrintOrder.id}</div>
+              <div className="receipt-number" style={{ fontSize: "1.25rem", fontWeight: 900, wordBreak: "break-all", fontFamily: "monospace", display: "block", width: "100%", textAlign: "center", background: "#f0edea", padding: "0.4rem 0.75rem", borderRadius: "8px" }}>
+                #{selectedPrintOrder.id.slice(0, 8).toUpperCase()}
+              </div>
+              <div style={{ fontSize: "0.6rem", color: "#888888", fontFamily: "monospace", marginTop: "0.25rem", wordBreak: "break-all" }}>
+                Precise ID: {selectedPrintOrder.id}
+              </div>
             </div>
             
             <div className="receipt-meta">
