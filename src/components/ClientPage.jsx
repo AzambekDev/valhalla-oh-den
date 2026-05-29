@@ -378,13 +378,21 @@ export default function ClientPage() {
             <span className="receipt-total-val">${parseFloat(activeOrder.total_price).toFixed(2)}</span>
           </div>
 
-          {activeOrder.status === "ready" ? (
+          {activeOrder.status === "completed" ? (
+            <div style={{ background: "rgba(52, 211, 153, 0.1)", border: "1px solid var(--color-success)", color: "#047857", borderRadius: "8px", padding: "0.75rem", fontSize: "0.85rem", textAlign: "center", fontWeight: 700, marginBottom: "1rem" }}>
+              🍲 Thank you! Your pre-order has been successfully picked up and completed. We hope you enjoyed your hot oden bowl! See you next time! 🍢
+            </div>
+          ) : activeOrder.status === "ready" ? (
             <div style={{ background: "rgba(52, 211, 153, 0.1)", border: "1px solid var(--color-success)", color: "#047857", borderRadius: "8px", padding: "0.75rem", fontSize: "0.85rem", textAlign: "center", fontWeight: 700, marginBottom: "1rem" }}>
               ⚡ Your Oden is steaming hot and packaged! Head to the Atrium stall, present this receipt number, and pick it up!
             </div>
-          ) : (activeOrder.payment_method === "cash" && activeOrder.status !== "pending") ? (
+          ) : activeOrder.status === "preparing" ? (
             <div style={{ background: "rgba(52, 211, 153, 0.08)", border: "1px solid rgba(52, 211, 153, 0.25)", color: "#047857", borderRadius: "8px", padding: "0.75rem", fontSize: "0.85rem", textAlign: "center", fontWeight: 700, marginBottom: "1rem" }}>
-              💵 CASH PAYMENT VERIFIED & PAID: Thank you! We have received your payment of RM {parseFloat(activeOrder.total_price).toFixed(2)} at the APU Atrium counter. Your delicious bowl is cooking now! 🍳
+              {activeOrder.payment_method === "cash" ? (
+                <span>💵 CASH PAYMENT VERIFIED & PAID: Thank you! We have received your payment of RM {parseFloat(activeOrder.total_price).toFixed(2)} at the APU Atrium counter. Your delicious bowl is cooking now! 🍳</span>
+              ) : (
+                <span>📲 TNG PAYMENT VERIFIED & CONFIRMED: Thank you! Your Touch 'n Go eWallet payment has been verified. Your delicious bowl is cooking now! 🍳</span>
+              )}
             </div>
           ) : (
             <div style={{ background: activeOrder.payment_method === "cash" ? "rgba(239, 68, 68, 0.08)" : "rgba(242, 161, 38, 0.05)", border: activeOrder.payment_method === "cash" ? "1px solid rgba(239, 68, 68, 0.25)" : "1px solid var(--border-light)", color: activeOrder.payment_method === "cash" ? "var(--accent-red)" : "#666", borderRadius: "8px", padding: "0.75rem", fontSize: "0.85rem", textAlign: "center", fontStyle: "italic", marginBottom: "1rem", fontWeight: activeOrder.payment_method === "cash" ? 700 : "normal" }}>
