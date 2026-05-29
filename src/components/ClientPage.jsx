@@ -59,6 +59,8 @@ function playCustomerChime() {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
+    
+    // Use the keepalive active iOS context or fall back
     const ctx = iosAudioCtx || new AudioContext();
     if (ctx.state === "suspended") {
       ctx.resume();
@@ -79,6 +81,14 @@ function playCustomerChime() {
       const oscSq = ctx.createOscillator();
       const gainNode = ctx.createGain();
       
+      // Pro Dynamics Compressor prevents iOS Webkit from compressing/silencing high amplitude peaks
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-24, startTime);
+      compressor.knee.setValueAtTime(30, startTime);
+      compressor.ratio.setValueAtTime(12, startTime);
+      compressor.attack.setValueAtTime(0.003, startTime);
+      compressor.release.setValueAtTime(0.25, startTime);
+      
       oscSaw.type = "sawtooth"; // Rich bright high-frequency cutting harmonics
       oscSaw.frequency.setValueAtTime(freq, startTime);
       oscSaw.frequency.exponentialRampToValueAtTime(freq * 1.38, startTime + 0.35); // Sweeping siren chirp
@@ -87,14 +97,15 @@ function playCustomerChime() {
       oscSq.frequency.setValueAtTime(freq * 1.015, startTime); // Slightly detuned by 1.5% for an acoustic beating effect
       oscSq.frequency.exponentialRampToValueAtTime(freq * 1.38 * 1.015, startTime + 0.35);
       
-      // Piercing gain level (0.9 gain stands out extremely well, close to max digital ceiling)
+      // Piercing gain level (0.75 combined with compressor avoids triggering iOS protective limiter squashing)
       gainNode.gain.setValueAtTime(0.001, startTime);
-      gainNode.gain.linearRampToValueAtTime(0.9, startTime + 0.05); 
-      gainNode.gain.linearRampToValueAtTime(0.9, startTime + 0.28);
+      gainNode.gain.linearRampToValueAtTime(0.75, startTime + 0.05); 
+      gainNode.gain.linearRampToValueAtTime(0.75, startTime + 0.28);
       gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
       
-      oscSaw.connect(gainNode);
-      oscSq.connect(gainNode);
+      oscSaw.connect(compressor);
+      oscSq.connect(compressor);
+      compressor.connect(gainNode);
       gainNode.connect(ctx.destination);
       
       oscSaw.start(startTime);
@@ -139,15 +150,49 @@ function announceOrderReady(orderId, customerName) {
   }
 }
 
-// iPhone/iOS Webkit Audio Context unlock helper
+// iPhone/iOS Webkit Audio Context unlock & keepalive helper
 let iosAudioCtx = null;
+let keepAliveInterval = null;
+
+function startAudioKeepAlive(ctx) {
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+  }
+  
+  // Rhythmic silent audio pulses to keep the device's hardware audio driver awake and running
+  keepAliveInterval = setInterval(() => {
+    try {
+      if (!ctx || ctx.state === "closed") return;
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+      
+      // Play sub-audible low frequency sound to maintain active state in background/idle locks
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1, ctx.currentTime); // 1Hz sub-audible
+      gain.gain.setValueAtTime(0.00001, ctx.currentTime); // extremely quiet
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } catch (e) {
+      console.warn("Audio keep-alive warning:", e);
+    }
+  }, 4000); // Trigger every 4 seconds
+}
 
 function unlockAudio() {
   try {
     // 1. Instantiate and resume Web AudioContext via user interaction
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (AudioContext) {
-      const ctx = new AudioContext();
+      let ctx = iosAudioCtx;
+      if (!ctx || ctx.state === "closed") {
+        ctx = new AudioContext();
+      }
+      
       if (ctx.state === "suspended") {
         ctx.resume();
       }
@@ -162,6 +207,9 @@ function unlockAudio() {
       osc.stop(ctx.currentTime + 0.05);
       
       iosAudioCtx = ctx;
+      
+      // Start the silent keepalive routine to lock the Audio Context into active mode
+      startAudioKeepAlive(ctx);
     }
     
     // 2. Instantiate and speak a micro-silent utterance to unlock Speech Synthesis
@@ -171,7 +219,7 @@ function unlockAudio() {
       window.speechSynthesis.speak(utterance);
     }
     
-    console.log("🔊 iPhone Webkit Audio Context & SpeechSynthesis unlocked successfully!");
+    console.log("🔊 iPhone Webkit Audio Context & Keep-Alive unlocked successfully!");
   } catch (e) {
     console.error("Failed to unlock iOS Webkit audio:", e);
   }
