@@ -683,31 +683,29 @@ export default function ClientPage() {
                   
                   {/* Option 1: Cash */}
                   <div 
-                    className={`soup-card ${paymentMethod === "cash" ? "selected" : ""}`}
-                    style={{ padding: "1.25rem", display: "flex", alignItems: "center", gap: "1rem", borderRadius: "12px" }}
+                    className={`payment-selector-card ${paymentMethod === "cash" ? "selected" : ""}`}
                     onClick={() => setPaymentMethod("cash")}
                   >
-                    <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: paymentMethod === "cash" ? "rgba(52, 211, 153, 0.15)" : "var(--bg-card)", display: "flex", alignItems: "center", justifyCenter: "center", color: paymentMethod === "cash" ? "var(--color-success)" : "var(--color-text-dim)" }}>
-                      <DollarSign size={20} style={{ margin: "auto" }} />
+                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: paymentMethod === "cash" ? "rgba(52, 211, 153, 0.15)" : "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: paymentMethod === "cash" ? "var(--color-success)" : "var(--color-text-dim)" }}>
+                      <DollarSign size={18} style={{ margin: "auto" }} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>Cash on Pickup</div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>Pay upon physical collection</div>
+                      <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Cash on Pickup</div>
+                      <div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>Pay upon collection</div>
                     </div>
                   </div>
 
                   {/* Option 2: TnG */}
                   <div 
-                    className={`soup-card ${paymentMethod === "tng" ? "selected" : ""}`}
-                    style={{ padding: "1.25rem", display: "flex", alignItems: "center", gap: "1rem", borderRadius: "12px" }}
+                    className={`payment-selector-card ${paymentMethod === "tng" ? "selected" : ""}`}
                     onClick={() => setPaymentMethod("tng")}
                   >
-                    <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: paymentMethod === "tng" ? "rgba(242, 161, 38, 0.15)" : "var(--bg-card)", display: "flex", alignItems: "center", justifyCenter: "center", color: paymentMethod === "tng" ? "var(--accent-gold)" : "var(--color-text-dim)" }}>
-                      <QrCode size={20} style={{ margin: "auto" }} />
+                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: paymentMethod === "tng" ? "rgba(242, 161, 38, 0.15)" : "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: paymentMethod === "tng" ? "var(--accent-gold)" : "var(--color-text-dim)" }}>
+                      <QrCode size={18} style={{ margin: "auto" }} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>Touch 'n Go eWallet</div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>Scan QR Code to pay in advance</div>
+                      <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Touch 'n Go eWallet</div>
+                      <div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>Scan QR to pay in advance</div>
                     </div>
                   </div>
 
@@ -720,11 +718,11 @@ export default function ClientPage() {
                   <div className="tng-payment-grid">
                     
                     {/* Real Touch 'n Go DuitNow QR Image */}
-                    <div style={{ background: "white", padding: "0.5rem", borderRadius: "8px", boxShadow: "0 4px 10px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
+                    <div style={{ background: "white", padding: "0.4rem", borderRadius: "8px", boxShadow: "0 4px 10px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
                       <img 
                         src="/tng_qr.jpg" 
                         alt="Touch 'n Go DuitNow QR Code" 
-                        style={{ width: "120px", height: "auto", borderRadius: "6px", display: "block" }}
+                        style={{ width: "95px", height: "auto", borderRadius: "6px", display: "block" }}
                       />
                     </div>
 
