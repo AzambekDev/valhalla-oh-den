@@ -333,8 +333,17 @@ export default function ClientPage() {
             </div>
             <div className="receipt-meta-row">
               <span className="receipt-meta-label">Payment:</span>
-              <span className="receipt-meta-val" style={{ textTransform: "uppercase", fontWeight: 800 }}>
-                {activeOrder.payment_method === "tng" ? `TnG eWallet (Verified)` : "Cash on Pickup"}
+              <span 
+                className="receipt-meta-val" 
+                style={{ 
+                  textTransform: "uppercase", 
+                  fontWeight: 800,
+                  color: activeOrder.payment_method === "cash" && activeOrder.status === "pending" ? "var(--accent-red)" : "var(--color-success)"
+                }}
+              >
+                {activeOrder.payment_method === "tng" 
+                  ? "TnG eWallet (Verified)" 
+                  : (activeOrder.status === "pending" ? "Cash (Awaiting Payment)" : "Cash (Paid & Verified) ✓")}
               </span>
             </div>
             {activeOrder.payment_method === "tng" && (
@@ -372,6 +381,10 @@ export default function ClientPage() {
           {activeOrder.status === "ready" ? (
             <div style={{ background: "rgba(52, 211, 153, 0.1)", border: "1px solid var(--color-success)", color: "#047857", borderRadius: "8px", padding: "0.75rem", fontSize: "0.85rem", textAlign: "center", fontWeight: 700, marginBottom: "1rem" }}>
               ⚡ Your Oden is steaming hot and packaged! Head to the Atrium stall, present this receipt number, and pick it up!
+            </div>
+          ) : (activeOrder.payment_method === "cash" && activeOrder.status !== "pending") ? (
+            <div style={{ background: "rgba(52, 211, 153, 0.08)", border: "1px solid rgba(52, 211, 153, 0.25)", color: "#047857", borderRadius: "8px", padding: "0.75rem", fontSize: "0.85rem", textAlign: "center", fontWeight: 700, marginBottom: "1rem" }}>
+              💵 CASH PAYMENT VERIFIED & PAID: Thank you! We have received your payment of RM {parseFloat(activeOrder.total_price).toFixed(2)} at the APU Atrium counter. Your delicious bowl is cooking now! 🍳
             </div>
           ) : (
             <div style={{ background: activeOrder.payment_method === "cash" ? "rgba(239, 68, 68, 0.08)" : "rgba(242, 161, 38, 0.05)", border: activeOrder.payment_method === "cash" ? "1px solid rgba(239, 68, 68, 0.25)" : "1px solid var(--border-light)", color: activeOrder.payment_method === "cash" ? "var(--accent-red)" : "#666", borderRadius: "8px", padding: "0.75rem", fontSize: "0.85rem", textAlign: "center", fontStyle: "italic", marginBottom: "1rem", fontWeight: activeOrder.payment_method === "cash" ? 700 : "normal" }}>
