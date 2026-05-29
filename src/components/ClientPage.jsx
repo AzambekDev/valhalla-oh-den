@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   ShoppingBag, 
   ChevronRight, 
@@ -54,7 +54,62 @@ const SOUP_DETAILS = {
   }
 };
 
+// Web Audio chime for customer alert
+function playCustomerChime() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    // Play a lovely double-tone high melody
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+    gain1.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start();
+    osc1.stop(ctx.currentTime + 0.3);
+    
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15); // E5
+    gain2.gain.setValueAtTime(0.1, ctx.currentTime + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(ctx.currentTime + 0.15);
+    osc2.stop(ctx.currentTime + 0.55);
+  } catch (e) {
+    console.error("Audio chime error:", e);
+  }
+}
+
+// Text-to-speech voice announcer
+function announceOrderReady(orderId, customerName) {
+  try {
+    if (!window.speechSynthesis) return;
+    
+    // Cancel any active speech to avoid overlaps
+    window.speechSynthesis.cancel();
+    
+    const text = `Order ${orderId.replace("-", " ")} for ${customerName} is ready for pickup at the APU Atrium!`;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.05;
+    utterance.volume = 1.0;
+    
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.error("TTS speech error:", e);
+  }
+}
+
 export default function ClientPage() {
+  const prevStatusRef = useRef(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [status, setStatus] = useState({ isOpen: true, reason: "" });
   const [timeLeft, setTimeLeft] = useState(0);
@@ -128,12 +183,19 @@ export default function ClientPage() {
   useEffect(() => {
     if (!activeReceiptId) {
       setActiveOrder(null);
+      prevStatusRef.current = null;
       return;
     }
 
     const unsubscribe = subscribeOrders((orders) => {
       const match = orders.find(o => o.id === activeReceiptId);
       if (match) {
+        // Trigger background voice and chime alerts on transition to "ready"
+        if (prevStatusRef.current !== null && prevStatusRef.current !== "ready" && match.status === "ready") {
+          playCustomerChime();
+          announceOrderReady(match.id, match.customer_name);
+        }
+        prevStatusRef.current = match.status;
         setActiveOrder(match);
       }
     });
