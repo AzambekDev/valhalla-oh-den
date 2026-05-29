@@ -1681,122 +1681,252 @@ select.form-input {
 }
 
 @media (max-width: 768px) {
-  .main-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.65rem 0.9rem;
-  }
-  .brand-logo {
-    font-size: 1.35rem;
-  }
-  .brand-name {
-    font-size: 1rem;
-  }
-  .brand-tag {
-    font-size: 0.6rem;
-    padding: 0.1rem 0.35rem;
-  }
+  /* 📱 ERGONOMIC BOTTOM NAVIGATION BAR PORT */
   .nav-tabs {
-    padding: 0.2rem;
-    gap: 0.2rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(20, 17, 15, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0;
+    padding: 0.4rem 1rem;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    height: 64px;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
   }
+
   .nav-tab-btn {
-    font-size: 0.75rem;
-    padding: 0.4rem 0.65rem;
-    gap: 0.3rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.68rem;
+    padding: 0.25rem 0;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none !important;
+    color: var(--color-text-muted);
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    border: none !important;
   }
-  .nav-tab-btn svg {
-    width: 13px;
-    height: 13px;
+
+  .nav-tab-btn.active {
+    background: transparent !important;
+    color: var(--accent-gold) !important;
+    font-weight: 700;
   }
-  .header-clock {
-    display: none; /* Hide clock on mobile to maximize tab bar room */
+
+  .nav-tab-btn.active svg {
+    stroke: var(--accent-gold) !important;
   }
+
+  .app-container {
+    padding-bottom: 84px !important; /* Spacious padding bottom to clear bottom tab bar */
+  }
+
+  /* 🍢 MOBILE SPACING & COMPACTNESS OPTIMIZATIONS */
+  .main-header {
+    padding: 0.75rem 1rem;
+    background: rgba(28, 24, 21, 0.92);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .brand-section {
+    gap: 0.5rem;
+  }
+
+  .brand-logo {
+    font-size: 1.4rem;
+  }
+
+  .brand-name {
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  .brand-tag {
+    display: none; /* Hide tag to maximize header cleanliness */
+  }
+
   .view-wrapper {
-    margin: 1rem auto;
-    padding: 0 1rem;
+    margin: 0.75rem auto;
+    padding: 0 0.75rem;
   }
+
   .client-hero {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
+    padding: 0 0.5rem;
   }
+
   .client-hero h1 {
-    font-size: 1.75rem;
+    font-size: 1.65rem;
     letter-spacing: -0.5px;
   }
+
   .client-hero p {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     line-height: 1.4;
   }
+
   .stepper-bar {
     max-width: 100%;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
+    padding: 0 1.5rem;
   }
+
   .step-panel {
-    padding: 1.5rem 1.25rem;
+    padding: 1.25rem 1rem;
     border-radius: var(--radius-md);
+    margin-bottom: 1.25rem;
+    box-shadow: var(--shadow-sm);
   }
+
+  .step-title-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .step-subtitle {
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+  }
+
   .step-title {
-    font-size: 1.35rem;
-  }
-  .soup-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  .soup-card {
-    padding: 1.25rem;
-  }
-  .soup-name {
     font-size: 1.25rem;
   }
-  .skewer-item {
-    padding: 1rem;
+
+  /* 🍲 COMPACT SOUP SELECTOR */
+  .soup-grid {
+    grid-template-columns: 1fr;
     gap: 0.75rem;
   }
+
+  .soup-card {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+  }
+
+  .soup-badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .soup-name {
+    font-size: 1.15rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .soup-desc {
+    font-size: 0.85rem;
+    line-height: 1.35;
+  }
+
+  /* 🍢 SKEWER CUSTOMIZER */
+  .skewer-grid {
+    gap: 0.65rem;
+  }
+
+  .skewer-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md);
+  }
+
+  .skewer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
   .skewer-name {
     font-size: 0.95rem;
   }
+
   .skewer-desc {
     font-size: 0.75rem;
-    line-height: 1.3;
+    line-height: 1.25;
+    color: var(--color-text-muted);
   }
+
   .skewer-price {
     font-size: 0.8rem;
+    margin-top: 0;
   }
+
+  .skewer-control {
+    gap: 0.75rem;
+  }
+
   .quantity-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
   }
+
   .quantity-value {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    min-width: 15px;
   }
+
+  /* 📄 RESPONSIVE FORMS & SETTINGS */
   .form-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 0.75rem;
   }
-  .form-group.full-width {
-    grid-column: span 1;
+
+  .form-input {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
   }
+
   .admin-kpis {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
+
   .kpi-card {
-    padding: 1rem;
+    padding: 0.85rem;
+    gap: 0.5rem;
   }
+
+  .kpi-icon-wrap {
+    width: 28px;
+    height: 28px;
+  }
+
+  .kpi-icon-wrap svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .kpi-label {
+    font-size: 0.7rem;
+  }
+
   .kpi-value {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
+
   .dev-panel-drawer {
     flex-direction: column;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
   }
+
   .dev-drawer-section {
     width: 100%;
     justify-content: space-between;
+    gap: 0.5rem;
   }
 }
 
