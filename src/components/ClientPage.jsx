@@ -247,19 +247,19 @@ export default function ClientPage() {
     
     setIsAlarmActive(true);
     
-    // Play immediately on trigger
+    // Play immediately on trigger (piercing siren sweeps + vibration + background native tray popup)
     playCustomerChime();
-    announceOrderReady(orderId, customerName);
+    triggerBackgroundNotification(orderId);
     
     let cycleCount = 1;
-    // Repeat the penetrative buzzer siren and voice alert every 5.5 seconds (siren takes 4.2s)
+    // Repeat the penetrative buzzer siren and OS tray alert every 5.5 seconds (siren takes 4.2s)
     alarmIntervalRef.current = setInterval(() => {
       if (cycleCount >= 6) { // Run for up to 6 cycles (~33 seconds)
         stopHeavyAlarm();
         return;
       }
       playCustomerChime();
-      announceOrderReady(orderId, customerName);
+      triggerBackgroundNotification(orderId);
       cycleCount++;
     }, 5500);
   };
@@ -275,8 +275,41 @@ export default function ClientPage() {
     }
   };
 
-  // Clean up alarm loops on component unmount
+  // Triggers native OS tray notifications (highly optimized for Android background Chrome execution)
+  const triggerBackgroundNotification = (orderId) => {
+    try {
+      const shortId = orderId.slice(0, 8).toUpperCase();
+      const notifTitle = "🍢 ODEN READY FOR PICKUP!";
+      const notifOptions = {
+        body: `Ticket #${shortId} is steaming hot and ready! Collect your bowl at the APU Atrium counter.`,
+        icon: "/logo.jpg",
+        badge: "/logo.jpg",
+        vibrate: [800, 150, 800, 150, 800, 150, 800], // Heavy physical phone vibration array
+        tag: "oden-ready-" + orderId, // Avoid spamming duplicate alerts
+        requireInteraction: true // Keeps alert on screen until tapped/dismissed
+      };
+
+      // Best Practice: Trigger background notification using service worker registration (prevents Android sleep throttling)
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+          registration.showNotification(notifTitle, notifOptions);
+        });
+      } else if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(notifTitle, notifOptions);
+      }
+    } catch (e) {
+      console.warn("Background OS tray alert failed:", e);
+    }
+  };
+
+  // Register Background Service Worker & clean up loops on unmount
   useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js")
+        .then(reg => console.log("🍢 background sw.js loaded successfully!"))
+        .catch(err => console.error("sw.js load failed:", err));
+    }
+
     return () => {
       if (alarmIntervalRef.current) {
         clearInterval(alarmIntervalRef.current);
@@ -287,11 +320,16 @@ export default function ClientPage() {
     };
   }, []);
 
-  // iOS silent audio engine unlock listener
+  // iOS/Android silent audio engine & notification unlock listener
   useEffect(() => {
     const handleGesture = () => {
       unlockAudio();
       setIsAudioEnabled(true);
+      
+      // Request HTML5 native push/tray Notification permissions for background Android alerts!
+      if ("Notification" in window) {
+        Notification.requestPermission();
+      }
       
       // Clean up event listeners immediately once unlocked
       document.removeEventListener("click", handleGesture);
@@ -310,6 +348,9 @@ export default function ClientPage() {
   const handleEnableAudio = () => {
     unlockAudio();
     setIsAudioEnabled(true);
+    if ("Notification" in window) {
+      Notification.requestPermission();
+    }
   };
   
   // Pre-order Stepper Form State with Memory Persistence
