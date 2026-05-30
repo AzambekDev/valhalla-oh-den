@@ -15,7 +15,7 @@ import ClientPage from "./components/ClientPage";
 import WorkerPage from "./components/WorkerPage";
 import AdminPage from "./components/AdminPage";
 import { getCurrentTime } from "./utils/time";
-import { isSupabaseConnected, verifyPasscode } from "./utils/db";
+import { isSupabaseConnected, verifyPasscode, subscribeOrders } from "./utils/db";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("client");
@@ -49,10 +49,16 @@ export default function App() {
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("oden_db_update", handleStorageChange);
 
+    // Permanent background subscription for global settings updates (Force Open/Close, Cutoff Times)
+    const unsubscribe = subscribeOrders(() => {
+      // Settings sync is handled centrally inside subscribeOrders inside db.js!
+    });
+
     return () => {
       clearInterval(interval);
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("oden_db_update", handleStorageChange);
+      unsubscribe();
     };
   }, []);
 

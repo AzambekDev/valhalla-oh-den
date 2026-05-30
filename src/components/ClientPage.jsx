@@ -427,13 +427,7 @@ export default function ClientPage() {
     };
   }, []);
 
-  // Permanent background subscription for global settings updates (Force Open/Close, Cutoff Times)
-  useEffect(() => {
-    const unsubscribe = subscribeOrders(() => {
-      // Settings sync is handled centrally inside subscribeOrders inside db.js!
-    });
-    return () => unsubscribe();
-  }, []);
+
 
   // iOS/Android silent audio engine & notification unlock listener
   useEffect(() => {
