@@ -17,6 +17,73 @@ import AdminPage from "./components/AdminPage";
 import { getCurrentTime } from "./utils/time";
 import { isSupabaseConnected, verifyPasscode, subscribeOrders } from "./utils/db";
 
+// Robust, visually rich Error Boundary to catch any downstream UI crashes (e.g. from corrupt cache payloads)
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ display: "flex", width: "100%", justifyContent: "center", padding: "4rem 1rem", animation: "slideUp 0.4s ease" }}>
+          <div className="step-panel" style={{ maxWidth: "600px", width: "100%", textAlign: "center", padding: "3rem 2rem", background: "rgba(28, 24, 21, 0.85)", backdropFilter: "blur(12px)", border: "1px solid var(--accent-red)", borderRadius: "16px", boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.37)" }}>
+            <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.25)", color: "var(--accent-red)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem auto" }}>
+              <span style={{ fontSize: "2rem" }}>⚠️</span>
+            </div>
+
+            <h2 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.5px", color: "white" }}>Dashboard Rendering Error</h2>
+            <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem", margin: "0.5rem 0 1.5rem 0", lineHeight: "1.5" }}>
+              A critical rendering or synchronization error has occurred in the active view layer. Please clear local caches or refresh the dashboard to recover.
+            </p>
+
+            <div style={{ background: "rgba(0, 0, 0, 0.4)", border: "1px solid var(--border-light)", borderRadius: "8px", padding: "1rem", marginBottom: "1.75rem", textAlign: "left", overflowX: "auto" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", display: "block", marginBottom: "0.25rem", fontWeight: "bold" }}>ERROR DIAGNOSTICS:</span>
+              <code style={{ fontSize: "0.8rem", color: "var(--accent-red)", fontFamily: "monospace", whiteSpace: "pre-wrap" }}>
+                {this.state.error && this.state.error.toString()}
+              </code>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  window.location.reload();
+                }}
+                style={{ justifyContent: "center" }}
+              >
+                Clear Data & Reset
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-primary"
+                onClick={() => window.location.reload()}
+                style={{ justifyContent: "center", background: "var(--accent-gold)" }}
+              >
+                🔄 Refresh Page
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState("client");
   const [headerTimeStr, setHeaderTimeStr] = useState("");
@@ -244,12 +311,12 @@ export default function App() {
             </div>
           </div>
         ) : (
-          // Unlocked Views
-          <>
+          // Unlocked Views wrapped inside ErrorBoundary to prevent blank page unmounts
+          <ErrorBoundary>
             {activeTab === "client" && <ClientPage />}
             {activeTab === "worker" && <WorkerPage />}
             {activeTab === "admin" && <AdminPage />}
-          </>
+          </ErrorBoundary>
         )}
 
       </main>

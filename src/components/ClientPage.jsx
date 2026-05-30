@@ -620,7 +620,8 @@ export default function ClientPage() {
     }
 
     const unsubscribe = subscribeOrders((orders) => {
-      const match = orders.find(o => o.id === activeReceiptId);
+      const ordersArray = Array.isArray(orders) ? orders : [];
+      const match = ordersArray.find(o => o && o.id === activeReceiptId);
       if (match) {
         const isStatusTransition = prevStatusRef.current !== null && prevStatusRef.current !== "ready" && match.status === "ready";
         const isPingTriggered = prevPingCountRef.current !== undefined && match.ping_count > prevPingCountRef.current && match.status === "ready";

@@ -107,23 +107,29 @@ export async function setPasscode(role, plaintext) {
 }
 
 export async function getOrders() {
-  const supabase = getSupabaseClient();
-  if (supabase) {
-    // Check and create system settings row in background
-    ensureStallSettings().catch(err => console.error("ensureStallSettings error:", err));
-    try {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
-    } catch (e) {
-      console.error("Supabase getOrders error, falling back to local:", e);
+  try {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      // Check and create system settings row in background
+      ensureStallSettings().catch(err => console.error("ensureStallSettings error:", err));
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      } catch (e) {
+        console.error("Supabase getOrders error, falling back to local:", e);
+        return JSON.parse(localStorage.getItem("oden_orders") || "[]");
+      }
     }
+    ensureStallSettings().catch(err => console.error("ensureStallSettings error:", err));
+    return JSON.parse(localStorage.getItem("oden_orders") || "[]");
+  } catch (err) {
+    console.error("Critical error in getOrders, returning local fallback:", err);
+    return JSON.parse(localStorage.getItem("oden_orders") || "[]");
   }
-  ensureStallSettings().catch(err => console.error("ensureStallSettings error:", err));
-  return JSON.parse(localStorage.getItem("oden_orders") || "[]");
 }
 
 export async function addOrder(orderData) {
@@ -257,8 +263,8 @@ export function subscribeOrders(callback) {
   let active = true;
 
   const handleSettingsSync = (ordersList) => {
-    if (!ordersList) return;
-    const settingsOrder = ordersList.find(o => o.id === "STALL_SETTINGS");
+    if (!ordersList || !Array.isArray(ordersList)) return;
+    const settingsOrder = ordersList.find(o => o && o.id === "STALL_SETTINGS");
     if (settingsOrder && settingsOrder.items) {
       const cloudForce = settingsOrder.items.force_status || "auto";
       const cloudCutoff = settingsOrder.items.cutoff_time || "16:00";
@@ -276,70 +282,98 @@ export function subscribeOrders(callback) {
 
   getOrders().then(orders => {
     if (active) {
-      handleSettingsSync(orders);
-      callback(orders);
+      const ordersArray = Array.isArray(orders) ? orders : [];
+      handleSettingsSync(ordersArray);
+      callback(ordersArray);
+    }
+  }).catch(err => {
+    console.error("subscribeOrders initial fetch error:", err);
+    if (active) {
+      callback([]);
     }
   });
 
   const supabase = getSupabaseClient();
   if (supabase) {
-    const channel = supabase
-      .channel("custom-all-channel")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
-        async () => {
+    try {
+      const uniqueChannelId = `orders-channel-${Math.floor(100000 + Math.random() * 900000)}`;
+      const channel = supabase
+        .channel(uniqueChannelId)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "orders" },
+          async () => {
+            try {
+              const freshOrders = await getOrders();
+              if (active) {
+                const ordersArray = Array.isArray(freshOrders) ? freshOrders : [];
+                handleSettingsSync(ordersArray);
+                callback(ordersArray);
+              }
+            } catch (err) {
+              console.error("postgres_changes event handle error:", err);
+            }
+          }
+        )
+        .subscribe();
+
+      // 🔄 Polling fallback: Automatically query fresh orders from the cloud database every 5 seconds
+      // to guarantee instant dashboard refreshes if WebSockets are slow or throttling.
+      const pollInterval = setInterval(async () => {
+        try {
           const freshOrders = await getOrders();
           if (active) {
-            handleSettingsSync(freshOrders);
-            callback(freshOrders);
+            const ordersArray = Array.isArray(freshOrders) ? freshOrders : [];
+            handleSettingsSync(ordersArray);
+            callback(ordersArray);
           }
+        } catch (err) {
+          console.error("pollInterval cloud error:", err);
         }
-      )
-      .subscribe();
+      }, 5000);
 
-    // 🔄 Polling fallback: Automatically query fresh orders from the cloud database every 5 seconds
-    // to guarantee instant dashboard refreshes if WebSockets are slow or throttling.
-    const pollInterval = setInterval(async () => {
-      const freshOrders = await getOrders();
-      if (active) {
-        handleSettingsSync(freshOrders);
-        callback(freshOrders);
-      }
-    }, 5000);
-
-    return () => {
-      active = false;
-      supabase.removeChannel(channel);
-      clearInterval(pollInterval);
-    };
-  } else {
-    const handleStorageChange = async () => {
-      const freshOrders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
-      if (active) {
-        handleSettingsSync(freshOrders);
-        callback(freshOrders);
-      }
-    };
-
-    // 🔄 Local Polling fallback: Periodically load local storage to sync tabs instantly
-    const pollInterval = setInterval(async () => {
-      const freshOrders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
-      if (active) {
-        handleSettingsSync(freshOrders);
-        callback(freshOrders);
-      }
-    }, 5000);
-
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("oden_db_update", handleStorageChange);
-    return () => {
-      active = false;
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("oden_db_update", handleStorageChange);
-      clearInterval(pollInterval);
-    };
+      return () => {
+        active = false;
+        try {
+          supabase.removeChannel(channel);
+        } catch (err) {
+          console.error("removeChannel error:", err);
+        }
+        clearInterval(pollInterval);
+      };
+    } catch (e) {
+      console.error("Supabase subscription setup failed, falling back to local:", e);
+    }
   }
+
+  // Fallback to local storage polling (always used as a resilient fallback if Supabase fails or is disabled)
+  const handleStorageChange = async () => {
+    const freshOrders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+    if (active) {
+      const ordersArray = Array.isArray(freshOrders) ? freshOrders : [];
+      handleSettingsSync(ordersArray);
+      callback(ordersArray);
+    }
+  };
+
+  // 🔄 Local Polling fallback: Periodically load local storage to sync tabs instantly
+  const pollInterval = setInterval(async () => {
+    const freshOrders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+    if (active) {
+      const ordersArray = Array.isArray(freshOrders) ? freshOrders : [];
+      handleSettingsSync(ordersArray);
+      callback(ordersArray);
+    }
+  }, 5000);
+
+  window.addEventListener("storage", handleStorageChange);
+  window.addEventListener("oden_db_update", handleStorageChange);
+  return () => {
+    active = false;
+    window.removeEventListener("storage", handleStorageChange);
+    window.removeEventListener("oden_db_update", handleStorageChange);
+    clearInterval(pollInterval);
+  };
 }
 
 /**

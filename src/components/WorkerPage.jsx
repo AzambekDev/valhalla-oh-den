@@ -48,6 +48,19 @@ function playKitchenChime() {
   }
 }
 
+// Safely format order time without throwing RangeError on browser date parsing inconsistencies (e.g. iOS Safari)
+function formatTime(dateStr) {
+  if (!dateStr) return "--:--";
+  try {
+    const cleanStr = typeof dateStr === "string" ? dateStr.trim().replace(" ", "T") : dateStr;
+    const d = new Date(cleanStr);
+    if (isNaN(d.getTime())) return "--:--";
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return "--:--";
+  }
+}
+
 export default function WorkerPage() {
   const [orders, setOrders] = useState([]);
   const [activeReceiptOrder, setActiveReceiptOrder] = useState(null); // Modal viewer order
@@ -57,11 +70,12 @@ export default function WorkerPage() {
   // Subscribe to real-time order streams
   useEffect(() => {
     const unsubscribe = subscribeOrders((freshOrders) => {
-      const currentPendingCount = freshOrders.filter(o => o.status === "pending").length;
+      const ordersArray = Array.isArray(freshOrders) ? freshOrders : [];
+      const currentPendingCount = ordersArray.filter(o => o && o.status === "pending").length;
       if (!initialLoadRef.current && currentPendingCount > prevOrdersCountRef.current) {
         playKitchenChime();
       }
-      setOrders(freshOrders);
+      setOrders(ordersArray);
       prevOrdersCountRef.current = currentPendingCount;
       initialLoadRef.current = false;
     });
@@ -93,10 +107,10 @@ export default function WorkerPage() {
 
 
 
-  const pendingOrders = orders.filter(o => o.status === "pending" && o.id !== "STALL_SETTINGS");
-  const preparingOrders = orders.filter(o => o.status === "preparing" && o.id !== "STALL_SETTINGS");
-  const readyOrders = orders.filter(o => o.status === "ready" && o.id !== "STALL_SETTINGS");
-  const completedOrders = orders.filter(o => o.status === "completed" && o.id !== "STALL_SETTINGS");
+  const pendingOrders = orders.filter(o => o && o.status === "pending" && o.id !== "STALL_SETTINGS");
+  const preparingOrders = orders.filter(o => o && o.status === "preparing" && o.id !== "STALL_SETTINGS");
+  const readyOrders = orders.filter(o => o && o.status === "ready" && o.id !== "STALL_SETTINGS");
+  const completedOrders = orders.filter(o => o && o.status === "completed" && o.id !== "STALL_SETTINGS");
 
   return (
     <div className="worker-layout" style={{ animation: "slideUp 0.3s ease" }}>
@@ -141,28 +155,28 @@ export default function WorkerPage() {
                   <div className="order-card-header">
                     <span className="order-card-id">{order.id}</span>
                     <span className="order-card-time">
-                      {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatTime(order.created_at)}
                     </span>
                   </div>
 
                   <div>
-                    <div className="order-card-cust">{order.customer_name}</div>
+                    <div className="order-card-cust">{order.customer_name || "Guest Customer"}</div>
                     <div className="order-card-phone">
                       <a 
-                        href={`https://wa.me/${order.phone.replace(/[^0-9]/g, "")}`} 
+                        href={`https://wa.me/${(order.phone || "").replace(/[^0-9]/g, "")}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         style={{ display: "flex", alignItems: "center", gap: "0.2rem", color: "var(--color-success)", textDecoration: "none" }}
                       >
-                        <Phone size={11} /> {order.phone}
+                        <Phone size={11} /> {order.phone || "No Phone"}
                       </a>
                     </div>
                   </div>
 
                   {/* Payment Badging */}
                   <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
-                    <span className={`order-card-soup ${order.soup_base.toLowerCase()}`}>
-                      🍲 {order.soup_base}
+                    <span className={`order-card-soup ${(order.soup_base || "clear").toLowerCase()}`}>
+                      🍲 {order.soup_base || "Clear Soup"}
                     </span>
                     {order.payment_method === "tng" ? (
                       <span 
@@ -171,7 +185,7 @@ export default function WorkerPage() {
                         onClick={() => setActiveReceiptOrder(order)}
                         title="Click to verify screenshot slip"
                       >
-                        <QrCode size={11} /> TnG (Ref: {order.payment_ref.slice(-4)}) 📸
+                        <QrCode size={11} /> TnG (Ref: {(order.payment_ref || "").slice(-4) || "N/A"}) 📸
                       </span>
                     ) : (
                       <span 
@@ -191,16 +205,16 @@ export default function WorkerPage() {
                   </div>
 
                   <div className="order-card-items">
-                    {Object.keys(order.items).map(name => (
+                    {Object.keys(order.items || {}).map(name => (
                       <div className="order-card-item" key={name}>
                         <span className="order-card-item-name">{name}</span>
-                        <span className="order-card-qty">x{order.items[name]}</span>
+                        <span className="order-card-qty">x{(order.items || {})[name]}</span>
                       </div>
                     ))}
                   </div>
 
                   <div className="order-card-pickup" style={{ color: "var(--accent-red)" }}>
-                    <Clock size={13} /> Pickup: {order.pickup_time}
+                    <Clock size={13} /> Pickup: {order.pickup_time || "Asap"}
                   </div>
 
                   <div className="order-card-footer">
@@ -248,27 +262,27 @@ export default function WorkerPage() {
                   <div className="order-card-header">
                     <span className="order-card-id">{order.id}</span>
                     <span className="order-card-time">
-                      {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatTime(order.created_at)}
                     </span>
                   </div>
 
                   <div>
-                    <div className="order-card-cust">{order.customer_name}</div>
+                    <div className="order-card-cust">{order.customer_name || "Guest Customer"}</div>
                     <div className="order-card-phone">
                       <a 
-                        href={`https://wa.me/${order.phone.replace(/[^0-9]/g, "")}`} 
+                        href={`https://wa.me/${(order.phone || "").replace(/[^0-9]/g, "")}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         style={{ display: "flex", alignItems: "center", gap: "0.2rem", color: "var(--color-success)", textDecoration: "none" }}
                       >
-                        <Phone size={11} /> {order.phone}
+                        <Phone size={11} /> {order.phone || "No Phone"}
                       </a>
                     </div>
                   </div>
 
                   <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
-                    <span className={`order-card-soup ${order.soup_base.toLowerCase()}`}>
-                      🍲 {order.soup_base}
+                    <span className={`order-card-soup ${(order.soup_base || "clear").toLowerCase()}`}>
+                      🍲 {order.soup_base || "Clear Soup"}
                     </span>
                     {order.payment_method === "tng" ? (
                       <span 
@@ -276,7 +290,7 @@ export default function WorkerPage() {
                         style={{ background: "rgba(242, 161, 38, 0.12)", color: "var(--accent-gold)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}
                         onClick={() => setActiveReceiptOrder(order)}
                       >
-                        <QrCode size={11} /> TnG (Ref: {order.payment_ref.slice(-4)}) 📸
+                        <QrCode size={11} /> TnG (Ref: {(order.payment_ref || "").slice(-4) || "N/A"}) 📸
                       </span>
                     ) : (
                       <span className="order-card-soup" style={{ background: "rgba(52, 211, 153, 0.12)", color: "var(--color-success)", display: "inline-flex", alignItems: "center", gap: "0.15rem" }}>
@@ -286,16 +300,16 @@ export default function WorkerPage() {
                   </div>
 
                   <div className="order-card-items">
-                    {Object.keys(order.items).map(name => (
+                    {Object.keys(order.items || {}).map(name => (
                       <div className="order-card-item" key={name}>
                         <span className="order-card-item-name">{name}</span>
-                        <span className="order-card-qty">x{order.items[name]}</span>
+                        <span className="order-card-qty">x{(order.items || {})[name]}</span>
                       </div>
                     ))}
                   </div>
 
                   <div className="order-card-pickup" style={{ color: "var(--accent-gold)" }}>
-                    <Clock size={13} /> Pickup: {order.pickup_time}
+                    <Clock size={13} /> Pickup: {order.pickup_time || "Asap"}
                   </div>
 
                   <div className="order-card-footer">
@@ -333,27 +347,27 @@ export default function WorkerPage() {
                   <div className="order-card-header">
                     <span className="order-card-id">{order.id}</span>
                     <span className="order-card-time">
-                      {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatTime(order.created_at)}
                     </span>
                   </div>
 
                   <div>
-                    <div className="order-card-cust">{order.customer_name}</div>
+                    <div className="order-card-cust">{order.customer_name || "Guest Customer"}</div>
                     <div className="order-card-phone">
                       <a 
-                        href={`https://wa.me/${order.phone.replace(/[^0-9]/g, "")}`} 
+                        href={`https://wa.me/${(order.phone || "").replace(/[^0-9]/g, "")}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         style={{ display: "flex", alignItems: "center", gap: "0.2rem", color: "var(--color-success)", textDecoration: "none" }}
                       >
-                        <Phone size={11} /> {order.phone}
+                        <Phone size={11} /> {order.phone || "No Phone"}
                       </a>
                     </div>
                   </div>
 
                   <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
-                    <span className={`order-card-soup ${order.soup_base.toLowerCase()}`}>
-                      🍲 {order.soup_base}
+                    <span className={`order-card-soup ${(order.soup_base || "clear").toLowerCase()}`}>
+                      🍲 {order.soup_base || "Clear Soup"}
                     </span>
                     {order.payment_method === "tng" ? (
                       <span 
@@ -361,7 +375,7 @@ export default function WorkerPage() {
                         style={{ background: "rgba(242, 161, 38, 0.12)", color: "var(--accent-gold)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}
                         onClick={() => setActiveReceiptOrder(order)}
                       >
-                        <QrCode size={11} /> TnG (Ref: {order.payment_ref.slice(-4)}) 📸
+                        <QrCode size={11} /> TnG (Ref: {(order.payment_ref || "").slice(-4) || "N/A"}) 📸
                       </span>
                     ) : (
                       <span className="order-card-soup" style={{ background: "rgba(52, 211, 153, 0.12)", color: "var(--color-success)", display: "inline-flex", alignItems: "center", gap: "0.15rem" }}>
@@ -371,16 +385,16 @@ export default function WorkerPage() {
                   </div>
 
                   <div className="order-card-items">
-                    {Object.keys(order.items).map(name => (
+                    {Object.keys(order.items || {}).map(name => (
                       <div className="order-card-item" key={name}>
                         <span className="order-card-item-name">{name}</span>
-                        <span className="order-card-qty">x{order.items[name]}</span>
+                        <span className="order-card-qty">x{(order.items || {})[name]}</span>
                       </div>
                     ))}
                   </div>
 
                   <div className="order-card-pickup" style={{ color: "var(--color-success)" }}>
-                    <Clock size={13} /> Pickup: {order.pickup_time}
+                    <Clock size={13} /> Pickup: {order.pickup_time || "Asap"}
                   </div>
 
                   <div className="order-card-footer" style={{ gap: "0.25rem" }}>
@@ -427,17 +441,17 @@ export default function WorkerPage() {
                   <div className="order-card-header">
                     <span className="order-card-id" style={{ color: "var(--color-text-dim)" }}>{order.id}</span>
                     <span className="order-card-time">
-                      {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatTime(order.created_at)}
                     </span>
                   </div>
 
                   <div>
-                    <div className="order-card-cust" style={{ textDecoration: "line-through" }}>{order.customer_name}</div>
+                    <div className="order-card-cust" style={{ textDecoration: "line-through" }}>{order.customer_name || "Guest Customer"}</div>
                   </div>
 
                   <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
                     <span className="order-card-soup" style={{ background: "rgba(255, 255, 255, 0.05)", color: "var(--color-text-muted)" }}>
-                      🍲 {order.soup_base}
+                      🍲 {order.soup_base || "Clear Soup"}
                     </span>
                     {order.payment_method === "tng" ? (
                       <span 
@@ -445,7 +459,7 @@ export default function WorkerPage() {
                         style={{ background: "rgba(255, 255, 255, 0.05)", color: "var(--color-text-muted)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}
                         onClick={() => setActiveReceiptOrder(order)}
                       >
-                        <QrCode size={11} /> TnG (Ref: {order.payment_ref.slice(-4)}) 📸
+                        <QrCode size={11} /> TnG (Ref: {(order.payment_ref || "").slice(-4) || "N/A"}) 📸
                       </span>
                     ) : (
                       <span className="order-card-soup" style={{ background: "rgba(255, 255, 255, 0.05)", color: "var(--color-text-muted)", display: "inline-flex", alignItems: "center", gap: "0.15rem" }}>
@@ -455,10 +469,10 @@ export default function WorkerPage() {
                   </div>
 
                   <div className="order-card-items">
-                    {Object.keys(order.items).map(name => (
+                    {Object.keys(order.items || {}).map(name => (
                       <div className="order-card-item" key={name}>
                         <span className="order-card-item-name">{name}</span>
-                        <span className="order-card-qty">x{order.items[name]}</span>
+                        <span className="order-card-qty">x{(order.items || {})[name]}</span>
                       </div>
                     ))}
                   </div>
@@ -496,19 +510,19 @@ export default function WorkerPage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", background: "var(--bg-input)", padding: "0.75rem", borderRadius: "8px", fontSize: "0.85rem" }}>
                 <div>
                   <span style={{ color: "var(--color-text-muted)", display: "block" }}>Customer Name</span>
-                  <strong>{activeReceiptOrder.customer_name}</strong>
+                  <strong>{activeReceiptOrder.customer_name || "Guest Customer"}</strong>
                 </div>
                 <div>
                   <span style={{ color: "var(--color-text-muted)", display: "block" }}>TnG Reference ID</span>
-                  <strong style={{ color: "var(--accent-gold)", fontFamily: "monospace" }}>{activeReceiptOrder.payment_ref}</strong>
+                  <strong style={{ color: "var(--accent-gold)", fontFamily: "monospace" }}>{activeReceiptOrder.payment_ref || "N/A"}</strong>
                 </div>
                 <div style={{ marginTop: "0.5rem" }}>
                   <span style={{ color: "var(--color-text-muted)", display: "block" }}>Transfer Total</span>
-                  <strong style={{ color: "var(--accent-red)", fontSize: "1rem" }}>${parseFloat(activeReceiptOrder.total_price).toFixed(2)}</strong>
+                  <strong style={{ color: "var(--accent-red)", fontSize: "1rem" }}>RM {parseFloat(activeReceiptOrder.total_price || 0).toFixed(2)}</strong>
                 </div>
                 <div style={{ marginTop: "0.5rem" }}>
                   <span style={{ color: "var(--color-text-muted)", display: "block" }}>Pickup Slot</span>
-                  <strong>{activeReceiptOrder.pickup_time}</strong>
+                  <strong>{activeReceiptOrder.pickup_time || "Asap"}</strong>
                 </div>
               </div>
 
@@ -537,7 +551,7 @@ export default function WorkerPage() {
               >
                 Close & Confirm Verification
               </button>
-                  </div>
+            </div>
           </div>
         </div>
       )}
