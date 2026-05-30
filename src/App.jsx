@@ -192,7 +192,7 @@ export default function App() {
               <h2 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.5px" }}>🔒 {currentRoleName} Gate</h2>
               
               <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem", margin: "0.5rem 0 1.75rem 0", lineHeight: "1.5" }}>
-                This portal requires secure stall operator authorization. Hashed input is cross-verified via **SHA-256 Browser Cryptography** client-side.
+                This portal requires secure stall operator authorization. Hashed input is cross-verified via <strong>SHA-256 Browser Cryptography</strong> client-side.
               </p>
 
               <form onSubmit={handleVerifyPasscode} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>

@@ -466,7 +466,7 @@ export default function AdminPage() {
           
           <form onSubmit={handleUpdatePasscodes} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", lineHeight: "1.4", borderBottom: "1px solid var(--border-light)", paddingBottom: "0.5rem" }}>
-              🔒 **Cyber-sec Defense Active:** Passcodes are client-side hashed via **SHA-256** before storage. Decompiling or inspecting bundles will only show one-way cryptographic hex strings.
+              🔒 <strong>Cyber-sec Defense Active:</strong> Passcodes are client-side hashed via <strong>SHA-256</strong> before storage. Decompiling or inspecting bundles will only show one-way cryptographic hex strings.
             </div>
 
             <div className="form-group">
@@ -562,7 +562,7 @@ export default function AdminPage() {
 
         <form onSubmit={handlePurgeDatabase} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", lineHeight: "1.4", borderBottom: "1px solid rgba(239, 68, 68, 0.1)", paddingBottom: "0.5rem" }}>
-            💥 **Warning:** Wiping the database permanently deletes all pre-order lists, transaction histories, receipt slips, and sales KPIs from the Supabase cloud tables. This is irreversible. Highly recommended before going live!
+            💥 <strong>Warning:</strong> Wiping the database permanently deletes all pre-order lists, transaction histories, receipt slips, and sales KPIs from the Supabase cloud tables. This is irreversible. Highly recommended before going live!
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1rem", alignItems: "flex-end" }}>

@@ -929,13 +929,13 @@ export default function ClientPage() {
         <h2 className="closed-title">Pre-Ordering is Closed</h2>
         <p className="closed-desc">
           {status.reason} <br />
-          To ensure fresh preparation and seamless pickup, pre-orders are strictly accepted between **10:00 AM** and **{format12Hour(getCutoffTime())}** daily.
+          To ensure fresh preparation and seamless pickup, pre-orders are strictly accepted between <strong>10:00 AM</strong> and <strong>{format12Hour(getCutoffTime())}</strong> daily.
         </p>
         <div className="closed-reopen">
-          🔔 Next Pre-Order Window Opens: **Tomorrow at 10:00 AM**
+          🔔 Next Pre-Order Window Opens: <strong>Tomorrow at 10:00 AM</strong>
         </div>
         <div style={{ borderTop: "1px solid var(--border-light)", marginTop: "2rem", paddingTop: "1.5rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
-          💡 **Graders / Evaluators:** You can use the floating **Demo Control panel** in the bottom-right of the page to travel in time back to **11:30 AM** to test the ordering flow!
+          💡 <strong>Graders / Evaluators:</strong> You can use the floating <strong>Demo Control panel</strong> in the bottom-right of the page to travel in time back to <strong>11:30 AM</strong> to test the ordering flow!
         </div>
       </div>
     );
