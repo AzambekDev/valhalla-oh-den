@@ -929,7 +929,7 @@ export default function ClientPage() {
         <h2 className="closed-title">Pre-Ordering is Closed</h2>
         <p className="closed-desc">
           {status.reason} <br />
-          To ensure fresh preparation and seamless pickup, pre-orders are strictly accepted between <strong>10:00 AM</strong> and <strong>{format12Hour(getCutoffTime())}</strong> daily.
+          Our stall operating hours are strictly from <strong>10:00 AM</strong> to <strong>{format12Hour(getCutoffTime())}</strong> daily.
         </p>
         <div className="closed-reopen">
           🔔 Next Pre-Order Window Opens: <strong>Tomorrow at 10:00 AM</strong>
