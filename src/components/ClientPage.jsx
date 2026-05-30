@@ -934,9 +934,6 @@ export default function ClientPage() {
         <div className="closed-reopen">
           🔔 Next Pre-Order Window Opens: <strong>Tomorrow at 10:00 AM</strong>
         </div>
-        <div style={{ borderTop: "1px solid var(--border-light)", marginTop: "2rem", paddingTop: "1.5rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
-          💡 <strong>Graders / Evaluators:</strong> You can use the floating <strong>Demo Control panel</strong> in the bottom-right of the page to travel in time back to <strong>11:30 AM</strong> to test the ordering flow!
-        </div>
       </div>
     );
   }
