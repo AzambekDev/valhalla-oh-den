@@ -12,7 +12,8 @@ import {
   DollarSign,
   Upload,
   FileImage,
-  MapPin
+  MapPin,
+  X
 } from "lucide-react";
 import { 
   getCurrentTime, 
@@ -985,51 +986,91 @@ export default function ClientPage() {
       
       {/* 🎲 GORGEOUS CUSTOM MYSTERY ODEN RESULTS MODAL OVERLAY */}
       {mysteryResult && (
-        <div className="alarm-warning-overlay" style={{ animation: "fadeIn 0.25s ease" }}>
-          <div className="alarm-warning-box" style={{ borderColor: "var(--accent-gold)", boxShadow: "0 25px 60px rgba(242, 161, 38, 0.25)" }}>
-            <div style={{ fontSize: "3.5rem", animation: "alarmIconShake 0.4s infinite alternate ease-in-out", display: "inline-block", marginBottom: "0.5rem" }}>🎲✨</div>
-            <h2 style={{ color: "var(--accent-gold)", textShadow: "0 0 15px rgba(242, 161, 38, 0.45)", fontSize: "1.5rem" }} className="alarm-warning-title">
-              Viking Dice Rolled!
+        <div className="mystery-overlay-glass">
+          <div className="mystery-result-card">
+            {/* Close Button X */}
+            <button 
+              type="button" 
+              className="mystery-close-btn" 
+              onClick={() => setMysteryResult(null)}
+              title="Close results"
+            >
+              <X size={16} />
+            </button>
+
+            <div style={{ fontSize: "3.25rem", animation: "alarmIconShake 0.4s infinite alternate ease-in-out", display: "inline-block", marginBottom: "0.5rem" }}>🎲✨</div>
+            <h2 style={{ color: "var(--accent-gold)", textShadow: "0 0 15px rgba(242, 161, 38, 0.45)", fontSize: "1.45rem", margin: "0.25rem 0 0.5rem 0", fontWeight: 800 }}>
+              Odin's Favour Bestowed!
             </h2>
-            <p className="alarm-warning-text" style={{ fontSize: "0.9rem", color: "var(--color-text-main)", marginBottom: "1rem" }}>
-              Odin's ravens have spoken and filled your hot oden bowl with a delicious surprise combination!
+            <p className="alarm-warning-text" style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginBottom: "1rem", lineHeight: "1.4" }}>
+              The ravens have rolled the Viking dice and formulated a delicious random recipe just for you!
             </p>
 
-            {/* Programmatic Recipe Card details */}
-            <div style={{ background: "var(--bg-input)", borderRadius: "10px", padding: "1.1rem", margin: "1.25rem 0", textAlign: "left", border: "1px solid var(--border-light)", fontSize: "0.85rem" }}>
-              <div style={{ fontWeight: "bold", color: "var(--accent-gold)", fontSize: "0.9rem", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "0.5rem", marginBottom: "0.65rem", display: "flex", justifyContent: "space-between" }}>
-                <span>🍲 Soup Base</span>
-                <span>{mysteryResult.soupName} (RM 5.00)</span>
+            {/* Premium Recipe Container details */}
+            <div className="mystery-recipe-container">
+              <div className="mystery-recipe-header">
+                <span>🍲 {mysteryResult.soupName}</span>
+                <span>RM 5.00</span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", maxHeight: "160px", overflowY: "auto" }}>
+              
+              <div className="mystery-recipe-list">
                 {Object.keys(mysteryResult.items).map((key) => {
                   const qty = mysteryResult.items[key];
                   if (qty === 0) return null;
                   return (
-                    <div key={key} style={{ display: "flex", justifyContent: "space-between", color: "var(--color-text-main)", padding: "0.1rem 0" }}>
+                    <div key={key} className="mystery-recipe-row">
                       <span>🍢 {key}</span>
-                      <span style={{ fontWeight: "bold", color: "var(--accent-gold)" }}>x{qty}</span>
+                      <span style={{ fontWeight: 800, color: "var(--accent-gold)" }}>
+                        {qty}x (RM {(qty * 3).toFixed(2)})
+                      </span>
                     </div>
                   );
                 })}
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "0.5rem", marginTop: "0.65rem", fontSize: "0.95rem" }}>
-                <span style={{ color: "var(--color-text-main)" }}>TOTAL PRICE</span>
+
+              <div className="mystery-recipe-total">
+                <span>Bowl Total</span>
                 <span style={{ color: "var(--accent-gold)" }}>RM {mysteryResult.price}.00</span>
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setMysteryResult(null);
-                setCurrentStep(3); // Smoothly advance to checkout step!
-              }}
-              className="alarm-dismiss-btn"
-              style={{ background: "linear-gradient(135deg, var(--accent-gold), var(--accent-red))", color: "#000", fontWeight: "800", border: "none", boxShadow: "0 6px 20px rgba(242, 161, 38, 0.3)" }}
-            >
-              ⚡ Review & Checkout
-            </button>
+            {/* Smart Stepper Action Integration Panel */}
+            <div className="mystery-actions-panel">
+              <button
+                type="button"
+                onClick={() => {
+                  setMysteryResult(null);
+                  setCurrentStep(3); // Smoothly advance to checkout step!
+                }}
+                className="mystery-action-primary"
+              >
+                🔥 Checkout Now (RM {mysteryResult.price}.00)
+              </button>
+
+              <div className="mystery-btn-row">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMysteryResult(null);
+                    setCurrentStep(2); // Stay on Step 2 (skewer builder) so they can tweak selections!
+                  }}
+                  className="mystery-action-secondary"
+                  title="Tweak your ingredients on the skewer customizer page"
+                >
+                  🍢 Adjust & Tweak
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleGenerateMysteryOden}
+                  className="mystery-action-reroll"
+                  title="Roll again for a fresh combination"
+                >
+                  🎲 Re-Roll Bowl
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
@@ -1077,13 +1118,13 @@ export default function ClientPage() {
                 </p>
 
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem", width: "100%", margin: "0 auto 1.25rem auto" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "340px", fontSize: "0.8rem", fontWeight: "bold", padding: "0 0.25rem" }}>
-                    <span>Selected Budget:</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "380px", fontSize: "0.8rem", fontWeight: "bold", padding: "0 0.25rem" }}>
+                    <span>Target Budget:</span>
                     <span style={{ color: "var(--accent-gold)" }}>RM {mysteryBudget}.00</span>
                   </div>
                   
                   {/* Grid of budget buttons */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.4rem", width: "100%", maxWidth: "340px" }}>
+                  <div className="mystery-budget-grid">
                     {[8, 11, 14, 17, 20].map((price) => {
                       const isSelected = mysteryBudget === price;
                       const skewerCount = Math.floor((price - 5) / 3);
@@ -1092,24 +1133,11 @@ export default function ClientPage() {
                           key={price}
                           type="button"
                           onClick={() => setMysteryBudget(price)}
-                          style={{
-                            background: isSelected ? "var(--accent-gold)" : "rgba(255,255,255,0.03)",
-                            color: isSelected ? "#000" : "var(--color-text-main)",
-                            border: isSelected ? "1px solid var(--accent-gold)" : "1px solid var(--border-light)",
-                            borderRadius: "8px",
-                            padding: "0.4rem 0.2rem",
-                            cursor: "pointer",
-                            fontWeight: "bold",
-                            fontSize: "0.75rem",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            gap: "0.15rem",
-                            transition: "all var(--transition-fast)"
-                          }}
+                          className={`mystery-budget-pill ${isSelected ? "selected" : ""}`}
+                          title={`Select RM ${price} budget`}
                         >
                           <span>RM {price}</span>
-                          <span style={{ fontSize: "0.5rem", opacity: isSelected ? 0.95 : 0.55, fontWeight: "normal" }}>
+                          <span className="skewer-subtext">
                             {skewerCount} Skewer{skewerCount > 1 ? "s" : ""}
                           </span>
                         </button>

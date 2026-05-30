@@ -2223,5 +2223,340 @@ select.form-input {
   transform: translateY(0);
 }
 
+/* ==========================================================================
+   🎲 MYSTERY ODEN GENERATOR & PREMIUM DICE RESULTS UX STYLES
+   ========================================================================== */
 
+/* Budget Grid */
+.mystery-budget-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 380px;
+  margin: 0.5rem auto 1.25rem auto;
+}
 
+/* Budget Pill Button */
+.mystery-budget-pill {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--color-text-muted);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.25rem;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  transition: all var(--transition-normal);
+  outline: none;
+}
+
+.mystery-budget-pill:hover {
+  background: rgba(242, 161, 38, 0.05);
+  border-color: rgba(242, 161, 38, 0.4);
+  color: var(--color-text-main);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(242, 161, 38, 0.1);
+}
+
+.mystery-budget-pill:active {
+  transform: translateY(0);
+}
+
+/* Selected Budget Pill Button */
+.mystery-budget-pill.selected {
+  background: linear-gradient(135deg, var(--accent-gold), #f59e0b);
+  color: #0b0806;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 16px rgba(242, 161, 38, 0.4);
+  transform: translateY(-1px);
+}
+
+.mystery-budget-pill.selected .skewer-subtext {
+  color: rgba(11, 8, 6, 0.85);
+  font-weight: 600;
+}
+
+.mystery-budget-pill .skewer-subtext {
+  font-size: 0.55rem;
+  opacity: 0.8;
+  font-weight: normal;
+  transition: color var(--transition-fast);
+}
+
+/* Premium Glassmorphic Results Modal Overlay */
+.mystery-overlay-glass {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(17, 14, 12, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Premium Card container */
+.mystery-result-card {
+  background: linear-gradient(145deg, #1f1a17, #13100e);
+  border: 2px solid var(--accent-gold);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem 2rem;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(242, 161, 38, 0.18), inset 0 0 20px rgba(242, 161, 38, 0.05);
+  box-sizing: border-box;
+  position: relative;
+  animation: modalEntrance 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+/* Micro pulse background glow */
+.mystery-result-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(242, 161, 38, 0.03) 0%, transparent 60%);
+  pointer-events: none;
+  animation: diceSpinGlow 12s linear infinite;
+}
+
+@keyframes modalEntrance {
+  0% {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes diceSpinGlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Close Button (X) */
+.mystery-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  z-index: 10;
+}
+
+.mystery-close-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--color-error);
+  transform: rotate(90deg);
+}
+
+.mystery-close-btn:active {
+  transform: scale(0.95);
+}
+
+/* Styled Recipe details */
+.mystery-recipe-container {
+  background: #171310;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin: 1.5rem 0;
+  text-align: left;
+  border: 1px solid rgba(242, 161, 38, 0.15);
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.mystery-recipe-header {
+  font-weight: 800;
+  color: var(--accent-gold);
+  font-size: 0.95rem;
+  border-bottom: 1px solid rgba(242, 161, 38, 0.15);
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mystery-recipe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 160px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+/* Scrollbar styling for list */
+.mystery-recipe-list::-webkit-scrollbar {
+  width: 4px;
+}
+.mystery-recipe-list::-webkit-scrollbar-thumb {
+  background: rgba(242, 161, 38, 0.3);
+}
+
+.mystery-recipe-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--color-text-main);
+  font-size: 0.85rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.03);
+}
+
+.mystery-recipe-row:last-child {
+  border-bottom: none;
+}
+
+.mystery-recipe-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 800;
+  border-top: 1px solid rgba(242, 161, 38, 0.15);
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+  font-size: 1.05rem;
+}
+
+/* Action button panel inside modal */
+.mystery-actions-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.mystery-btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.mystery-action-primary {
+  background: linear-gradient(135deg, var(--accent-gold), #f59e0b);
+  color: #0b0806;
+  font-weight: 800;
+  border: none;
+  box-shadow: 0 6px 20px rgba(242, 161, 38, 0.3);
+  padding: 0.85rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all var(--transition-normal);
+}
+
+.mystery-action-primary:hover {
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(242, 161, 38, 0.45);
+}
+
+.mystery-action-primary:active {
+  transform: translateY(0);
+}
+
+.mystery-action-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-main);
+  border: 1px solid var(--border-light);
+  font-weight: 700;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all var(--transition-normal);
+}
+
+.mystery-action-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.mystery-action-secondary:active {
+  transform: translateY(0);
+}
+
+.mystery-action-reroll {
+  background: rgba(242, 76, 38, 0.08);
+  color: var(--accent-red);
+  border: 1px solid rgba(242, 76, 38, 0.25);
+  font-weight: 700;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all var(--transition-normal);
+}
+
+.mystery-action-reroll:hover {
+  background: rgba(242, 76, 38, 0.15);
+  border-color: var(--accent-red);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(242, 76, 38, 0.15);
+}
+
+.mystery-action-reroll:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .mystery-budget-grid {
+    gap: 0.3rem;
+  }
+  .mystery-budget-pill {
+    padding: 0.5rem 0.15rem;
+    font-size: 0.7rem;
+  }
+  .mystery-budget-pill .skewer-subtext {
+    font-size: 0.5rem;
+  }
+  .mystery-result-card {
+    padding: 1.75rem 1.25rem;
+  }
+}
