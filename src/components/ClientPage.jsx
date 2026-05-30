@@ -494,6 +494,49 @@ export default function ClientPage() {
   const [pickupTime, setPickupTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 🎲 Mystery Oden States & Randomizer Logic
+  const [mysteryBudget, setMysteryBudget] = useState(14); // Default: RM 14 (3 skewers)
+
+  const handleGenerateMysteryOden = () => {
+    // 1. Pick a random soup base
+    const soups = Object.keys(SOUP_DETAILS);
+    const randomSoup = soups[Math.floor(Math.random() * soups.length)];
+    
+    // 2. Calculate the number of skewers based on budget (soup base is RM 5, each skewer is RM 3)
+    const skewerCount = Math.floor((mysteryBudget - 5) / 3);
+    
+    // 3. Reset all skewer quantities
+    const freshSkewers = {
+      "Cheese Tofu": 0,
+      "Fish Sandwich": 0,
+      "Seafood Tofu": 0,
+      "Fish Ball": 0,
+      "Seafood Beancurd Roll": 0
+    };
+    
+    // 4. Randomly distribute the skewers
+    const skewerNames = Object.keys(freshSkewers);
+    for (let i = 0; i < skewerCount; i++) {
+      const randomSkewer = skewerNames[Math.floor(Math.random() * skewerNames.length)];
+      freshSkewers[randomSkewer] += 1;
+    }
+    
+    // 5. Update states
+    setSoupBase(randomSoup);
+    setSkewerQty(freshSkewers);
+    
+    // Show visual confirmation message
+    const summary = Object.keys(freshSkewers)
+      .filter(k => freshSkewers[k] > 0)
+      .map(k => `${freshSkewers[k]}x ${k}`)
+      .join(", ");
+      
+    alert(`🎲 ODIN'S DICE HATH SPOKEN!\n\nGenerated: ${SOUP_DETAILS[randomSoup].name} Soup Base + ${summary}!\n\nTotal Price: RM ${mysteryBudget}.00.\n\nEnjoy your surprise bowl! We have automatically advanced you to the checkout step.`);
+    
+    // Automatically skip to Step 3 so they can review their generated combination!
+    setCurrentStep(3);
+  };
+
   // 💳 New Payment States
   const [paymentMethod, setPaymentMethod] = useState("cash"); // 'cash' or 'tng'
   const [paymentRef, setPaymentRef] = useState("");
@@ -973,6 +1016,44 @@ export default function ClientPage() {
               <div className="step-title-group">
                 <span className="step-subtitle">Step One</span>
                 <h2 className="step-title">Choose Your Soup base</h2>
+              </div>
+
+              {/* ✨ MYSTERY ODEN VIKING DICE GENERATOR */}
+              <div style={{ background: "rgba(242, 161, 38, 0.04)", border: "1px dashed var(--accent-gold)", borderRadius: "12px", padding: "1.25rem", marginBottom: "2rem", textAlign: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", color: "var(--accent-gold)", fontWeight: "bold", fontSize: "0.95rem", marginBottom: "0.5rem" }}>
+                  <span>🎲 Let the Viking Gods Choose! (Mystery Oden)</span>
+                </div>
+                <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", lineHeight: "1.4", margin: "0.25rem 0 1rem 0" }}>
+                  Can't decide? Set your budget between <strong>RM 8</strong> and <strong>RM 20</strong>, and we'll randomly fill your bowl with rich soup and premium skewers!
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem", maxWidth: "280px", margin: "0 auto 1.25rem auto" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", width: "100%", fontSize: "0.8rem", fontWeight: "bold" }}>
+                    <span>Budget:</span>
+                    <span style={{ color: "var(--accent-gold)" }}>RM {mysteryBudget}.00</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="8" 
+                    max="20" 
+                    step="3" // Snaps to 8, 11, 14, 17, 20
+                    value={mysteryBudget} 
+                    onChange={(e) => setMysteryBudget(Number(e.target.value))}
+                    style={{ width: "100%", accentColor: "var(--accent-gold)", cursor: "pointer" }}
+                  />
+                  <div style={{ fontSize: "0.65rem", color: "var(--color-text-dim)" }}>
+                    Includes 1 Soup Base + {Math.floor((mysteryBudget - 5) / 3)} Random Skewers
+                  </div>
+                </div>
+
+                <button 
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleGenerateMysteryOden}
+                  style={{ width: "100%", maxWidth: "240px", margin: "0 auto", padding: "0.5rem 1rem", fontSize: "0.8rem", height: "38px" }}
+                >
+                  🎲 Roll Mystery Bowl
+                </button>
               </div>
 
               <div className="soup-grid">
