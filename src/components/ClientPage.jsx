@@ -320,8 +320,22 @@ export default function ClientPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [status, setStatus] = useState({ isOpen: true, reason: "" });
   const [timeLeft, setTimeLeft] = useState(0);
-  const [activeReceiptId, setActiveReceiptId] = useState(null);
-  const [activeOrder, setActiveOrder] = useState(null);
+  const [activeReceiptId, setActiveReceiptId] = useState(() => {
+    try {
+      return localStorage.getItem("oden_active_receipt_id") || null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [activeOrder, setActiveOrder] = useState(() => {
+    try {
+      const saved = localStorage.getItem("valhalla_active_order");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
 
   // Repeating Alarm System for Heavy APU Crowds
@@ -558,12 +572,6 @@ export default function ClientPage() {
       setTimeLeft(getRemainingTime());
     }, 1000);
 
-    // Retrieve active receipt from localStorage if they have an active order
-    const savedReceiptId = localStorage.getItem("oden_active_receipt_id");
-    if (savedReceiptId) {
-      setActiveReceiptId(savedReceiptId);
-    }
-
     // Load merchant DuitNow details
     setTngNumber(localStorage.getItem("oden_tng_number") || "+601164188797");
     setTngName(localStorage.getItem("oden_tng_name") || "SATTAROV AZAMBEK XXX");
@@ -574,6 +582,12 @@ export default function ClientPage() {
       const rid = localStorage.getItem("oden_active_receipt_id");
       if (rid !== activeReceiptId) {
         setActiveReceiptId(rid);
+        try {
+          const savedOrder = localStorage.getItem("valhalla_active_order");
+          setActiveOrder(savedOrder ? JSON.parse(savedOrder) : null);
+        } catch (e) {
+          setActiveOrder(null);
+        }
       }
       setTngNumber(localStorage.getItem("oden_tng_number") || "+601164188797");
       setTngName(localStorage.getItem("oden_tng_name") || "SATTAROV AZAMBEK XXX");
@@ -622,6 +636,7 @@ export default function ClientPage() {
 
         prevStatusRef.current = match.status;
         prevPingCountRef.current = match.ping_count || 0;
+        localStorage.setItem("valhalla_active_order", JSON.stringify(match));
         setActiveOrder(match);
       }
     });
@@ -738,7 +753,9 @@ export default function ClientPage() {
     try {
       const submittedOrder = await addOrder(orderData);
       localStorage.setItem("oden_active_receipt_id", submittedOrder.id);
+      localStorage.setItem("valhalla_active_order", JSON.stringify(submittedOrder));
       setActiveReceiptId(submittedOrder.id);
+      setActiveOrder(submittedOrder);
       localStorage.removeItem("valhalla_cached_soup");
       localStorage.removeItem("valhalla_cached_skewers");
     } catch (error) {
@@ -752,6 +769,7 @@ export default function ClientPage() {
   const handleNewOrder = () => {
     if (window.confirm("Start a new order? This receipt will no longer be tracked on this page.")) {
       localStorage.removeItem("oden_active_receipt_id");
+      localStorage.removeItem("valhalla_active_order");
       setActiveReceiptId(null);
       setActiveOrder(null);
       setSoupBase("");
