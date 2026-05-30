@@ -55,13 +55,14 @@ const SOUP_DETAILS = {
 };
 
 // Programmatic WAV file generator to generate a super loud, harsh 1000Hz sweeping siren blob URL
-// This allows bypass of iOS/iPhone "Silent Mode" physical switches by running as a Media playback stream!
+// This allows bypass of iOS/iPhone "Silent Mode" physical switches by running as a 16-bit Media playback stream!
 function generateLoudBuzzerWav() {
   try {
-    const sampleRate = 8000; // Lightweight 8kHz sample rate
-    const duration = 1.5;    // 1.5 seconds siren sweep
+    const sampleRate = 11025; // Standard high-quality frequency
+    const duration = 1.5;     // 1.5 seconds siren sweep
     const numSamples = sampleRate * duration;
-    const buffer = new ArrayBuffer(44 + numSamples);
+    // Header size = 44 bytes. 16-bit = 2 bytes per sample.
+    const buffer = new ArrayBuffer(44 + numSamples * 2);
     const view = new DataView(buffer);
     
     // Auxiliary string writer helper
@@ -72,26 +73,27 @@ function generateLoudBuzzerWav() {
     };
     
     writeStr(view, 0, 'RIFF');
-    view.setUint32(4, 36 + numSamples, true);
+    view.setUint32(4, 36 + numSamples * 2, true);
     writeStr(view, 8, 'WAVE');
     writeStr(view, 12, 'fmt ');
     view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true); // PCM Format
-    view.setUint16(22, 1, true); // Mono
+    view.setUint16(20, 1, true); // PCM Format (1 = uncompressed)
+    view.setUint16(22, 1, true); // Mono (1 channel)
     view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate, true); // Byte rate
-    view.setUint16(32, 1, true); // Block align
-    view.setUint16(34, 8, true); // 8-bit samples
+    view.setUint32(28, sampleRate * 2, true); // Byte rate (sampleRate * channels * bytes per sample)
+    view.setUint16(32, 2, true); // Block align (channels * bytes per sample)
+    view.setUint16(34, 16, true); // 16-bit samples
     writeStr(view, 36, 'data');
-    view.setUint32(40, numSamples, true);
+    view.setUint32(40, numSamples * 2, true);
     
     const baseFreq = 950;
-    // Generate a grating, extreme loudness square wave that sweeps between 750Hz and 1250Hz
+    // Generate a grating, extremely loud sweeping square-wave siren (sweeps 700Hz to 1200Hz)
     for (let i = 0; i < numSamples; i++) {
       const t = i / sampleRate;
       const sweepFreq = baseFreq + Math.sin(t * 12) * 250; 
-      const val = Math.sin(2 * Math.PI * sweepFreq * t) > 0 ? 235 : 20; // Piercing square wave clipping limits
-      view.setUint8(44 + i, val);
+      // 16-bit square wave oscillates between max positive and max negative signed 16-bit integers
+      const val = Math.sin(2 * Math.PI * sweepFreq * t) > 0 ? 28000 : -28000;
+      view.setInt16(44 + i * 2, val, true); // 16-bit signed integer (little-endian)
     }
     
     const blob = new Blob([buffer], { type: 'audio/wav' });
@@ -381,6 +383,8 @@ export default function ClientPage() {
         badge: "/logo.jpg",
         vibrate: [800, 150, 800, 150, 800, 150, 800], // Heavy physical phone vibration array
         tag: "oden-ready-" + orderId, // Avoid spamming duplicate alerts
+        renotify: true, // Force vibration and sound trigger even if a notification with this tag is already showing
+        silent: false, // Ensure OS alert sound and vibration are not suppressed
         requireInteraction: true // Keeps alert on screen until tapped/dismissed
       };
 
@@ -394,6 +398,13 @@ export default function ClientPage() {
       }
     } catch (e) {
       console.warn("Background OS tray alert failed:", e);
+    }
+  };
+
+  const handleOverlayClick = (e) => {
+    // Tapping anywhere on the flashing overlay instantly triggers/unmutes the sound (bypasses browser background block)
+    if (e.target.className !== "alarm-dismiss-btn") {
+      playCustomerChime();
     }
   };
 
@@ -727,15 +738,16 @@ export default function ClientPage() {
         
         {/* Fullscreen Flashing Emergency Warning Overlay */}
         {isAlarmActive && (
-          <div className="alarm-warning-overlay">
+          <div className="alarm-warning-overlay" onClick={handleOverlayClick}>
             <div className="alarm-warning-box">
               <div className="alarm-warning-icon">🔔🔥</div>
               <h2 className="alarm-warning-title">YOUR ODEN IS READY!</h2>
               <p className="alarm-warning-text">
                 Ticket <span className="alarm-warning-ticket">#{activeOrder.id.slice(0, 8).toUpperCase()}</span> is fresh, piping hot, and packaged for pickup at the APU Atrium Counter!
               </p>
-              <div className="alarm-warning-subtext">
-                🔊 A loud alert siren is playing and your phone is vibrating. Please collect your steaming oden bowl now!
+              <div className="alarm-warning-subtext" style={{ color: "var(--accent-gold)", fontWeight: 700 }}>
+                🔊 A loud alert siren is playing! <br />
+                <span style={{ fontSize: "0.75rem", opacity: 0.9 }}>(If silent, tap anywhere on screen to unmute and play)</span>
               </div>
               <button 
                 onClick={stopHeavyAlarm}

@@ -81,10 +81,6 @@ export function setCutoffTime(cutoff) {
   window.dispatchEvent(new Event("storage"));
 }
 
-/**
- * Checks if ordering is currently open based on current simulated time and settings.
- * Returns { isOpen: boolean, reason: string }
- */
 export function getOrderingStatus() {
   // Admin forced override takes absolute precedence
   const forceStatus = localStorage.getItem("oden_force_status"); // 'open', 'closed', or null
@@ -92,10 +88,32 @@ export function getOrderingStatus() {
     return { isOpen: true, reason: "Forced Open by Admin" };
   }
   if (forceStatus === "closed") {
-    return { isOpen: false, reason: "Stall Sold Out / Closed by Admin" };
+    return { isOpen: false, reason: "Sorry, we are closed! Stall Sold Out / Closed by Admin" };
   }
 
-  // Time restrictions removed: pre-ordering remains active all day!
+  const now = getCurrentTime();
+  
+  // Cutoff time parser (default 16:00 / 4:00 PM)
+  const cutoff = getCutoffTime();
+  const [cutoffHours, cutoffMinutes] = cutoff.split(":").map(Number);
+  
+  // Start time (10:00 AM)
+  const startTimeHours = 10;
+  const startTimeMinutes = 0;
+
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+
+  // Closed if before 10:00 AM
+  if (currentHour < startTimeHours || (currentHour === startTimeHours && currentMinute < startTimeMinutes)) {
+    return { isOpen: false, reason: "Sorry, we are closed!" };
+  }
+
+  // Closed if past Cutoff (default 4:00 PM / 16:00)
+  if (currentHour > cutoffHours || (currentHour === cutoffHours && currentMinute >= cutoffMinutes)) {
+    return { isOpen: false, reason: "Sorry, we are closed!" };
+  }
+
   return { isOpen: true, reason: "Pre-ordering is Active!" };
 }
 
