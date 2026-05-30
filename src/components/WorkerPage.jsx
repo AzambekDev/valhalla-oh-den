@@ -93,10 +93,10 @@ export default function WorkerPage() {
 
 
 
-  const pendingOrders = orders.filter(o => o.status === "pending");
-  const preparingOrders = orders.filter(o => o.status === "preparing");
-  const readyOrders = orders.filter(o => o.status === "ready");
-  const completedOrders = orders.filter(o => o.status === "completed");
+  const pendingOrders = orders.filter(o => o.status === "pending" && o.id !== "STALL_SETTINGS");
+  const preparingOrders = orders.filter(o => o.status === "preparing" && o.id !== "STALL_SETTINGS");
+  const readyOrders = orders.filter(o => o.status === "ready" && o.id !== "STALL_SETTINGS");
+  const completedOrders = orders.filter(o => o.status === "completed" && o.id !== "STALL_SETTINGS");
 
   return (
     <div className="worker-layout" style={{ animation: "slideUp 0.3s ease" }}>

@@ -21,9 +21,10 @@ import {
   getSupabaseConfig,
   resetSupabaseClient,
   setPasscode,
-  clearOrders 
+  clearOrders,
+  syncStallSettings
 } from "../utils/db";
-import { getCutoffTime, setCutoffTime } from "../utils/time";
+import { getCutoffTime } from "../utils/time";
 
 export default function AdminPage() {
   const [orders, setOrders] = useState([]);
@@ -89,7 +90,8 @@ export default function AdminPage() {
   }, []);
 
   const calculateKPIs = (orderList) => {
-    const totalOrders = orderList.length;
+    const cleanOrders = orderList.filter(o => o.id !== "STALL_SETTINGS");
+    const totalOrders = cleanOrders.length;
     let revenue = 0;
     let skewersSold = 0;
 
@@ -103,7 +105,7 @@ export default function AdminPage() {
     let tomYum = 0;
     let kimchi = 0;
 
-    orderList.forEach(order => {
+    cleanOrders.forEach(order => {
       revenue += parseFloat(order.total_price);
       
       if (order.soup_base === "Tom-Yum") tomYum++;
@@ -130,20 +132,15 @@ export default function AdminPage() {
     setSoupStats({ tomYum, kimchi });
   };
 
-  const handleCutoffChange = (e) => {
+  const handleCutoffChange = async (e) => {
     const newVal = e.target.value;
     setCutoffVal(newVal);
-    setCutoffTime(newVal);
+    await syncStallSettings(undefined, newVal);
   };
 
-  const handleForceStatus = (status) => {
+  const handleForceStatus = async (status) => {
     setForceStatus(status);
-    if (status === "auto") {
-      localStorage.removeItem("oden_force_status");
-    } else {
-      localStorage.setItem("oden_force_status", status);
-    }
-    window.dispatchEvent(new Event("storage"));
+    await syncStallSettings(status, undefined);
   };
 
   // 🔐 Secure plain-text passcode updates (hashes in SHA-256 before saving)
@@ -216,7 +213,8 @@ export default function AdminPage() {
   };
 
   const exportToCSV = () => {
-    if (orders.length === 0) {
+    const cleanOrders = orders.filter(o => o.id !== "STALL_SETTINGS");
+    if (cleanOrders.length === 0) {
       alert("No order data to export!");
       return;
     }
@@ -224,7 +222,7 @@ export default function AdminPage() {
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent += "Order ID,Customer Name,Phone,Soup Base,Cheese Tofu,Fish Sandwich,Seafood Tofu,Fish Ball,Seafood Beancurd Roll,Total Price ($),Pickup Slot,Payment Method,Payment Ref,Status,Created At\n";
 
-    orders.forEach(o => {
+    cleanOrders.forEach(o => {
       const cheese = o.items["Cheese Tofu"] || 0;
       const sandwich = o.items["Fish Sandwich"] || 0;
       const seaTofu = o.items["Seafood Tofu"] || 0;
@@ -248,6 +246,7 @@ export default function AdminPage() {
   const exportTodayCSV = () => {
     const todayStr = new Date().toISOString().split("T")[0];
     const todayOrders = orders.filter(o => {
+      if (o.id === "STALL_SETTINGS") return false;
       const orderDate = new Date(o.created_at).toISOString().split("T")[0];
       return orderDate === todayStr;
     });
@@ -282,6 +281,7 @@ export default function AdminPage() {
   };
 
   const filteredOrders = orders.filter(o => {
+    if (o.id === "STALL_SETTINGS") return false;
     return o.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
            o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
            o.phone.includes(searchTerm);

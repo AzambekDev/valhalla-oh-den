@@ -109,6 +109,8 @@ export async function setPasscode(role, plaintext) {
 export async function getOrders() {
   const supabase = getSupabaseClient();
   if (supabase) {
+    // Check and create system settings row in background
+    ensureStallSettings().catch(err => console.error("ensureStallSettings error:", err));
     try {
       const { data, error } = await supabase
         .from("orders")
@@ -120,6 +122,7 @@ export async function getOrders() {
       console.error("Supabase getOrders error, falling back to local:", e);
     }
   }
+  ensureStallSettings().catch(err => console.error("ensureStallSettings error:", err));
   return JSON.parse(localStorage.getItem("oden_orders") || "[]");
 }
 
@@ -253,8 +256,29 @@ export async function pingCustomer(orderId, currentCount) {
 export function subscribeOrders(callback) {
   let active = true;
 
+  const handleSettingsSync = (ordersList) => {
+    if (!ordersList) return;
+    const settingsOrder = ordersList.find(o => o.id === "STALL_SETTINGS");
+    if (settingsOrder && settingsOrder.items) {
+      const cloudForce = settingsOrder.items.force_status || "auto";
+      const cloudCutoff = settingsOrder.items.cutoff_time || "16:00";
+      
+      const localForce = localStorage.getItem("oden_force_status") || "auto";
+      const localCutoff = localStorage.getItem("oden_cutoff_time") || "16:00";
+      
+      if (cloudForce !== localForce || cloudCutoff !== localCutoff) {
+        localStorage.setItem("oden_force_status", cloudForce);
+        localStorage.setItem("oden_cutoff_time", cloudCutoff);
+        window.dispatchEvent(new Event("storage"));
+      }
+    }
+  };
+
   getOrders().then(orders => {
-    if (active) callback(orders);
+    if (active) {
+      handleSettingsSync(orders);
+      callback(orders);
+    }
   });
 
   const supabase = getSupabaseClient();
@@ -266,7 +290,10 @@ export function subscribeOrders(callback) {
         { event: "*", schema: "public", table: "orders" },
         async () => {
           const freshOrders = await getOrders();
-          if (active) callback(freshOrders);
+          if (active) {
+            handleSettingsSync(freshOrders);
+            callback(freshOrders);
+          }
         }
       )
       .subscribe();
@@ -275,7 +302,10 @@ export function subscribeOrders(callback) {
     // to guarantee instant dashboard refreshes if WebSockets are slow or throttling.
     const pollInterval = setInterval(async () => {
       const freshOrders = await getOrders();
-      if (active) callback(freshOrders);
+      if (active) {
+        handleSettingsSync(freshOrders);
+        callback(freshOrders);
+      }
     }, 5000);
 
     return () => {
@@ -286,13 +316,19 @@ export function subscribeOrders(callback) {
   } else {
     const handleStorageChange = async () => {
       const freshOrders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
-      if (active) callback(freshOrders);
+      if (active) {
+        handleSettingsSync(freshOrders);
+        callback(freshOrders);
+      }
     };
 
     // 🔄 Local Polling fallback: Periodically load local storage to sync tabs instantly
     const pollInterval = setInterval(async () => {
       const freshOrders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
-      if (active) callback(freshOrders);
+      if (active) {
+        handleSettingsSync(freshOrders);
+        callback(freshOrders);
+      }
     }, 5000);
 
     window.addEventListener("storage", handleStorageChange);
@@ -303,5 +339,136 @@ export function subscribeOrders(callback) {
       window.removeEventListener("oden_db_update", handleStorageChange);
       clearInterval(pollInterval);
     };
+  }
+}
+
+/**
+ * Ensures the special STALL_SETTINGS row exists in the cloud database or local storage.
+ */
+export async function ensureStallSettings() {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("id", "STALL_SETTINGS");
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        const defaultSettings = {
+          id: "STALL_SETTINGS",
+          customer_name: "Stall Settings",
+          phone: "0000000000",
+          soup_base: "System",
+          items: {
+            force_status: localStorage.getItem("oden_force_status") || "auto",
+            cutoff_time: localStorage.getItem("oden_cutoff_time") || "16:00"
+          },
+          total_price: 0,
+          pickup_time: "System",
+          status: "completed",
+          payment_method: "cash",
+          payment_ref: "",
+          payment_slip: null,
+          ping_count: 0,
+          created_at: new Date().toISOString()
+        };
+        await supabase.from("orders").insert([defaultSettings]);
+      }
+    } catch (e) {
+      console.error("Failed to ensure cloud settings:", e);
+    }
+  } else {
+    const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+    const exists = orders.some(o => o.id === "STALL_SETTINGS");
+    if (!exists) {
+      const defaultSettings = {
+        id: "STALL_SETTINGS",
+        customer_name: "Stall Settings",
+        phone: "0000000000",
+        soup_base: "System",
+        items: {
+          force_status: localStorage.getItem("oden_force_status") || "auto",
+          cutoff_time: localStorage.getItem("oden_cutoff_time") || "16:00"
+        },
+        total_price: 0,
+        pickup_time: "System",
+        status: "completed",
+        payment_method: "cash",
+        payment_ref: "",
+        payment_slip: null,
+        ping_count: 0,
+        created_at: new Date().toISOString()
+      };
+      orders.push(defaultSettings);
+      localStorage.setItem("oden_orders", JSON.stringify(orders));
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("oden_db_update"));
+    }
+  }
+}
+
+/**
+ * Synchronizes force status and cutoff time to the STALL_SETTINGS row in cloud DB.
+ */
+export async function syncStallSettings(forceStatus, cutoffTime) {
+  const currentForce = forceStatus !== undefined ? forceStatus : (localStorage.getItem("oden_force_status") || "auto");
+  const currentCutoff = cutoffTime !== undefined ? cutoffTime : (localStorage.getItem("oden_cutoff_time") || "16:00");
+  
+  // Save locally immediately for snappy responsiveness
+  localStorage.setItem("oden_force_status", currentForce);
+  localStorage.setItem("oden_cutoff_time", currentCutoff);
+  window.dispatchEvent(new Event("storage"));
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      await ensureStallSettings();
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          items: {
+            force_status: currentForce,
+            cutoff_time: currentCutoff
+          }
+        })
+        .eq("id", "STALL_SETTINGS");
+      if (error) throw error;
+    } catch (e) {
+      console.error("Failed to sync cloud settings:", e);
+    }
+  } else {
+    // LocalStorage fallback
+    const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+    let match = orders.find(o => o.id === "STALL_SETTINGS");
+    if (match) {
+      match.items = {
+        force_status: currentForce,
+        cutoff_time: currentCutoff
+      };
+    } else {
+      orders.push({
+        id: "STALL_SETTINGS",
+        customer_name: "Stall Settings",
+        phone: "0000000000",
+        soup_base: "System",
+        items: {
+          force_status: currentForce,
+          cutoff_time: currentCutoff
+        },
+        total_price: 0,
+        pickup_time: "System",
+        status: "completed",
+        payment_method: "cash",
+        payment_ref: "",
+        payment_slip: null,
+        ping_count: 0,
+        created_at: new Date().toISOString()
+      });
+    }
+    localStorage.setItem("oden_orders", JSON.stringify(orders));
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("oden_db_update"));
   }
 }
