@@ -506,3 +506,165 @@ export async function syncStallSettings(forceStatus, cutoffTime) {
     window.dispatchEvent(new Event("oden_db_update"));
   }
 }
+
+// 🍢 Stress Testing Mock Data Generators & Helpers
+const MOCK_NAMES = [
+  "Ragnar Lothbrok", "Bjorn Ironside", "Ivar the Boneless", "Lagertha", "Floki", "Odin", "Thor", "Loki", "Freya", "Harald",
+  "Ali Bin Ahmad", "Chong Wei", "Muthu", "Siti Nurhaliza", "Devi", "Tan Ah Kow", "Sarah Connor", "John Doe", "Darren Tan", "Azambek"
+];
+const MOCK_PHONES = [
+  "+60 11-234 5678", "+60 12-345 6789", "+60 13-987 6543", "+60 16-418 8797", "+60 17-555 4321", "+60 19-888 1234"
+];
+const MOCK_SOUPS = ["Tom-Yum", "Kimchi"];
+const MOCK_ITEMS = [
+  "Cheese Tofu", "Fish Sandwich", "Seafood Tofu", "Fish Ball", "Seafood Beancurd Roll"
+];
+const MOCK_STATUSES = ["pending", "preparing", "ready", "completed"];
+const MOCK_SLOTS = ["11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM"];
+const MOCK_PAYMENTS = ["cash", "tng"];
+
+function generateSingleMockOrder(idNum, forceStatus) {
+  const name = MOCK_NAMES[Math.floor(Math.random() * MOCK_NAMES.length)];
+  const phone = MOCK_PHONES[Math.floor(Math.random() * MOCK_PHONES.length)];
+  const soup = MOCK_SOUPS[Math.floor(Math.random() * MOCK_SOUPS.length)];
+  
+  const items = {};
+  let totalQty = 0;
+  while (totalQty === 0) {
+    MOCK_ITEMS.forEach(item => {
+      const qty = Math.floor(Math.random() * 4); // 0-3
+      if (qty > 0) {
+        items[item] = qty;
+        totalQty += qty;
+      }
+    });
+  }
+  
+  const totalPrice = totalQty * 3.00;
+  const slot = MOCK_SLOTS[Math.floor(Math.random() * MOCK_SLOTS.length)];
+  const status = forceStatus || MOCK_STATUSES[Math.floor(Math.random() * MOCK_STATUSES.length)];
+  const payment = MOCK_PAYMENTS[Math.floor(Math.random() * MOCK_PAYMENTS.length)];
+  const paymentRef = payment === "tng" ? `TNG${Math.floor(10000000 + Math.random() * 90000000)}` : "";
+  
+  return {
+    id: `ODN-${idNum || Math.floor(1000 + Math.random() * 9000)}`,
+    customer_name: name,
+    phone: phone,
+    soup_base: soup,
+    items: items,
+    total_price: totalPrice,
+    pickup_time: slot,
+    status: status,
+    payment_method: payment,
+    payment_ref: paymentRef,
+    payment_slip: null,
+    ping_count: 0,
+    created_at: new Date(Date.now() - Math.random() * 8 * 3600 * 1000).toISOString()
+  };
+}
+
+export async function bulkAddOrders(count) {
+  const generated = [];
+  for (let i = 0; i < count; i++) {
+    const idNum = Math.floor(1000 + Math.random() * 8999);
+    generated.push(generateSingleMockOrder(idNum));
+  }
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const chunkSize = 200;
+      for (let i = 0; i < generated.length; i += chunkSize) {
+        const chunk = generated.slice(i, i + chunkSize);
+        const { error } = await supabase
+          .from("orders")
+          .insert(chunk);
+        if (error) throw error;
+      }
+      return true;
+    } catch (e) {
+      console.error("Supabase bulkAddOrders error, falling back to local:", e);
+    }
+  }
+
+  const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+  const filtered = orders.filter(o => o.id !== "STALL_SETTINGS");
+  const settings = orders.find(o => o.id === "STALL_SETTINGS");
+  
+  const newOrders = [...generated, ...filtered];
+  if (settings) {
+    newOrders.push(settings);
+  }
+  
+  localStorage.setItem("oden_orders", JSON.stringify(newOrders));
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new Event("oden_db_update"));
+  return true;
+}
+
+export async function resetMockOrders() {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { error: delError } = await supabase
+        .from("orders")
+        .delete()
+        .neq("id", "STALL_SETTINGS");
+      if (delError) throw delError;
+
+      const cleanMocks = [];
+      const sampleStatuses = ["pending", "pending", "preparing", "preparing", "ready", "ready", "completed", "completed", "completed", "completed"];
+      for (let i = 0; i < 10; i++) {
+        cleanMocks.push(generateSingleMockOrder(Math.floor(1000 + Math.random() * 8999), sampleStatuses[i]));
+      }
+
+      const { error: insError } = await supabase
+        .from("orders")
+        .insert(cleanMocks);
+      if (insError) throw insError;
+
+      return true;
+    } catch (e) {
+      console.error("Supabase resetMockOrders error, falling back to local:", e);
+    }
+  }
+
+  const cleanMocks = [];
+  const sampleStatuses = ["pending", "pending", "preparing", "preparing", "ready", "ready", "completed", "completed", "completed", "completed"];
+  for (let i = 0; i < 10; i++) {
+    cleanMocks.push(generateSingleMockOrder(Math.floor(1000 + Math.random() * 8999), sampleStatuses[i]));
+  }
+
+  const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+  const settings = orders.find(o => o.id === "STALL_SETTINGS");
+  
+  const newOrders = [...cleanMocks];
+  if (settings) {
+    newOrders.push(settings);
+  } else {
+    newOrders.push({
+      id: "STALL_SETTINGS",
+      customer_name: "Stall Settings",
+      phone: "0000000000",
+      soup_base: "System",
+      items: {
+        force_status: localStorage.getItem("oden_force_status") || "auto",
+        cutoff_time: localStorage.getItem("oden_cutoff_time") || "16:00"
+      },
+      total_price: 0,
+      pickup_time: "System",
+      status: "completed",
+      payment_method: "cash",
+      payment_ref: "",
+      payment_slip: null,
+      ping_count: 0,
+      created_at: new Date().toISOString()
+    });
+  }
+
+  localStorage.setItem("oden_orders", JSON.stringify(newOrders));
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new Event("oden_db_update"));
+  return true;
+}
+

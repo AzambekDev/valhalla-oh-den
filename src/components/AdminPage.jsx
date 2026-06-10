@@ -29,6 +29,8 @@ import { getCutoffTime } from "../utils/time";
 export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
   const [cutoffVal, setCutoffVal] = useState("16:00");
   const [forceStatus, setForceStatus] = useState("auto"); // 'auto', 'open', 'closed'
   // DuitNow TnG configurations
@@ -286,6 +288,9 @@ export default function AdminPage() {
            o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
            o.phone.includes(searchTerm);
   });
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1;
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const maxSkewerCount = Math.max(...Object.values(skewerStats), 1);
   const totalSoupCount = soupStats.tomYum + soupStats.kimchi || 1;
@@ -613,7 +618,10 @@ export default function AdminPage() {
                 className="form-input"
                 placeholder="Search orders (e.g. Darren, ODN-4182)"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
                 style={{ width: "100%", paddingLeft: "2.5rem", paddingRight: "1rem", paddingTop: "0.55rem", paddingBottom: "0.55rem" }}
               />
               <Search size={15} style={{ position: "absolute", left: "0.9rem", top: "50%", transform: "translateY(-50%)", color: "var(--color-text-dim)" }} />
@@ -664,7 +672,7 @@ export default function AdminPage() {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map(order => {
+                paginatedOrders.map(order => {
                   const itemsCount = Object.values(order.items).reduce((a, b) => a + b, 0);
                   return (
                     <tr key={order.id}>
@@ -714,6 +722,34 @@ export default function AdminPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination controls */}
+        {totalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-light)", flexWrap: "wrap", gap: "0.75rem" }}>
+            <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
+              Showing <strong>{((currentPage - 1) * itemsPerPage) + 1}</strong> to <strong>{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</strong> of <strong>{filteredOrders.length}</strong> orders
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+              <button 
+                className="btn btn-secondary" 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", borderRadius: "8px", minHeight: "32px", opacity: currentPage === 1 ? 0.4 : 1, cursor: currentPage === 1 ? "not-allowed" : "pointer" }}
+              >
+                Previous
+              </button>
+              <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--accent-gold)" }}>Page {currentPage} of {totalPages}</span>
+              <button 
+                className="btn btn-secondary" 
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", borderRadius: "8px", minHeight: "32px", opacity: currentPage === totalPages ? 0.4 : 1, cursor: currentPage === totalPages ? "not-allowed" : "pointer" }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
     </div>

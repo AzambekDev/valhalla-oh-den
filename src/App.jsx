@@ -14,6 +14,7 @@ import {
 import ClientPage from "./components/ClientPage";
 import WorkerPage from "./components/WorkerPage";
 import AdminPage from "./components/AdminPage";
+import DevPanel from "./components/DevPanel";
 import { getCurrentTime } from "./utils/time";
 import { isSupabaseConnected, verifyPasscode, subscribeOrders } from "./utils/db";
 
@@ -320,6 +321,9 @@ export default function App() {
         )}
 
       </main>
+
+      {/* Developer Demo & Stress Simulator Portal */}
+      <DevPanel />
 
     </div>
   );

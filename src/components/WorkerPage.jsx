@@ -64,6 +64,10 @@ function formatTime(dateStr) {
 export default function WorkerPage() {
   const [orders, setOrders] = useState([]);
   const [activeReceiptOrder, setActiveReceiptOrder] = useState(null); // Modal viewer order
+  const [pendingLimit, setPendingLimit] = useState(20);
+  const [preparingLimit, setPreparingLimit] = useState(20);
+  const [readyLimit, setReadyLimit] = useState(20);
+  const [completedLimit, setCompletedLimit] = useState(20);
   const prevOrdersCountRef = useRef(0);
   const initialLoadRef = useRef(true);
 
@@ -150,7 +154,7 @@ export default function WorkerPage() {
                 No pending orders.
               </div>
             ) : (
-              pendingOrders.map(order => (
+              pendingOrders.slice(0, pendingLimit).map(order => (
                 <div key={order.id} className="order-card">
                   <div className="order-card-header">
                     <span className="order-card-id">{order.id}</span>
@@ -240,6 +244,39 @@ export default function WorkerPage() {
               ))
             )}
           </div>
+          
+          {pendingOrders.length > pendingLimit && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", padding: "0.75rem", borderTop: "1px solid var(--border-light)", background: "rgba(0,0,0,0.1)", borderRadius: "0 0 12px 12px" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
+                Showing {pendingLimit} of {pendingOrders.length} orders
+              </div>
+              <div style={{ display: "flex", gap: "0.35rem" }}>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1, padding: "0.25rem 0.5rem", fontSize: "0.75rem", justifyContent: "center", minHeight: "28px" }}
+                  onClick={() => setPendingLimit(prev => prev + 50)}
+                >
+                  Load 50 More
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", justifyContent: "center", color: "var(--accent-gold)", borderColor: "var(--accent-gold)", minHeight: "28px" }}
+                  onClick={() => setPendingLimit(pendingOrders.length)}
+                >
+                  All
+                </button>
+              </div>
+            </div>
+          )}
+          {pendingLimit > 20 && pendingOrders.length > 20 && (
+            <button 
+              className="btn btn-secondary" 
+              style={{ width: "100%", padding: "0.25rem", fontSize: "0.7rem", justifyContent: "center", opacity: 0.6, minHeight: "24px" }}
+              onClick={() => setPendingLimit(20)}
+            >
+              Collapse list
+            </button>
+          )}
         </div>
 
         {/* COLUMN 2: PREPARING ORDERS */}
@@ -257,7 +294,7 @@ export default function WorkerPage() {
                 No active cooking.
               </div>
             ) : (
-              preparingOrders.map(order => (
+              preparingOrders.slice(0, preparingLimit).map(order => (
                 <div key={order.id} className="order-card">
                   <div className="order-card-header">
                     <span className="order-card-id">{order.id}</span>
@@ -325,6 +362,39 @@ export default function WorkerPage() {
               ))
             )}
           </div>
+          
+          {preparingOrders.length > preparingLimit && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", padding: "0.75rem", borderTop: "1px solid var(--border-light)", background: "rgba(0,0,0,0.1)", borderRadius: "0 0 12px 12px" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
+                Showing {preparingLimit} of {preparingOrders.length} orders
+              </div>
+              <div style={{ display: "flex", gap: "0.35rem" }}>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1, padding: "0.25rem 0.5rem", fontSize: "0.75rem", justifyContent: "center", minHeight: "28px" }}
+                  onClick={() => setPreparingLimit(prev => prev + 50)}
+                >
+                  Load 50 More
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", justifyContent: "center", color: "var(--accent-gold)", borderColor: "var(--accent-gold)", minHeight: "28px" }}
+                  onClick={() => setPreparingLimit(preparingOrders.length)}
+                >
+                  All
+                </button>
+              </div>
+            </div>
+          )}
+          {preparingLimit > 20 && preparingOrders.length > 20 && (
+            <button 
+              className="btn btn-secondary" 
+              style={{ width: "100%", padding: "0.25rem", fontSize: "0.7rem", justifyContent: "center", opacity: 0.6, minHeight: "24px" }}
+              onClick={() => setPreparingLimit(20)}
+            >
+              Collapse list
+            </button>
+          )}
         </div>
 
         {/* COLUMN 3: READY FOR PICKUP */}
@@ -342,7 +412,7 @@ export default function WorkerPage() {
                 Awaiting ready orders.
               </div>
             ) : (
-              readyOrders.map(order => (
+              readyOrders.slice(0, readyLimit).map(order => (
                 <div key={order.id} className="order-card ready-state">
                   <div className="order-card-header">
                     <span className="order-card-id">{order.id}</span>
@@ -419,6 +489,39 @@ export default function WorkerPage() {
               ))
             )}
           </div>
+          
+          {readyOrders.length > readyLimit && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", padding: "0.75rem", borderTop: "1px solid var(--border-light)", background: "rgba(0,0,0,0.1)", borderRadius: "0 0 12px 12px" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
+                Showing {readyLimit} of {readyOrders.length} orders
+              </div>
+              <div style={{ display: "flex", gap: "0.35rem" }}>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1, padding: "0.25rem 0.5rem", fontSize: "0.75rem", justifyContent: "center", minHeight: "28px" }}
+                  onClick={() => setReadyLimit(prev => prev + 50)}
+                >
+                  Load 50 More
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", justifyContent: "center", color: "var(--accent-gold)", borderColor: "var(--accent-gold)", minHeight: "28px" }}
+                  onClick={() => setReadyLimit(readyOrders.length)}
+                >
+                  All
+                </button>
+              </div>
+            </div>
+          )}
+          {readyLimit > 20 && readyOrders.length > 20 && (
+            <button 
+              className="btn btn-secondary" 
+              style={{ width: "100%", padding: "0.25rem", fontSize: "0.7rem", justifyContent: "center", opacity: 0.6, minHeight: "24px" }}
+              onClick={() => setReadyLimit(20)}
+            >
+              Collapse list
+            </button>
+          )}
         </div>
 
         {/* COLUMN 4: COMPLETED ORDERS */}
@@ -436,7 +539,7 @@ export default function WorkerPage() {
                 No completed history.
               </div>
             ) : (
-              completedOrders.slice(0, 15).map(order => (
+              completedOrders.slice(0, completedLimit).map(order => (
                 <div key={order.id} className="order-card" style={{ opacity: 0.65 }}>
                   <div className="order-card-header">
                     <span className="order-card-id" style={{ color: "var(--color-text-dim)" }}>{order.id}</span>
@@ -477,11 +580,43 @@ export default function WorkerPage() {
                     ))}
                   </div>
 
-
                 </div>
               ))
             )}
           </div>
+
+          {completedOrders.length > completedLimit && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", padding: "0.75rem", borderTop: "1px solid var(--border-light)", background: "rgba(0,0,0,0.1)", borderRadius: "0 0 12px 12px" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
+                Showing {completedLimit} of {completedOrders.length} orders
+              </div>
+              <div style={{ display: "flex", gap: "0.35rem" }}>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1, padding: "0.25rem 0.5rem", fontSize: "0.75rem", justifyContent: "center", minHeight: "28px" }}
+                  onClick={() => setCompletedLimit(prev => prev + 50)}
+                >
+                  Load 50 More
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem", justifyContent: "center", color: "var(--accent-gold)", borderColor: "var(--accent-gold)", minHeight: "28px" }}
+                  onClick={() => setCompletedLimit(completedOrders.length)}
+                >
+                  All
+                </button>
+              </div>
+            </div>
+          )}
+          {completedLimit > 20 && completedOrders.length > 20 && (
+            <button 
+              className="btn btn-secondary" 
+              style={{ width: "100%", padding: "0.25rem", fontSize: "0.7rem", justifyContent: "center", opacity: 0.6, minHeight: "24px" }}
+              onClick={() => setCompletedLimit(20)}
+            >
+              Collapse list
+            </button>
+          )}
         </div>
 
       </div>
