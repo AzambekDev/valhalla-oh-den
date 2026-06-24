@@ -1066,7 +1066,7 @@ export default function ClientPage() {
               <span>$5.00</span>
             </div>
 
-            {Object.keys(activeOrder.items).map((key) => (
+            {Object.keys(activeOrder.items).filter(k => k !== '_flags').map((key) => (
               <div className="receipt-item-row" key={key}>
                 <span className="receipt-item-name">{key}</span>
                 <span className="receipt-item-qty">x{activeOrder.items[key]}</span>
