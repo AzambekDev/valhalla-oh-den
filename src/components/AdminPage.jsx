@@ -101,7 +101,8 @@ export default function AdminPage() {
       "Lobster-flavoured balls": 0,
       "Stuffed squid rolls": 0,
       "Golden seafood rolls": 0,
-      "Scallop-style seafood tofu": 0
+      "Scallop-style seafood tofu": 0,
+      "Fishball": 0
     };
     let tomYum = 0;
     let kimchi = 0;
@@ -221,17 +222,18 @@ export default function AdminPage() {
     }
 
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Order ID,Customer Name,Phone,Soup Base,Lobster-flavoured balls,Stuffed squid rolls,Golden seafood rolls,Scallop-style seafood tofu,Total Price ($),Pickup Slot,Payment Method,Payment Ref,Status,Created At\n";
+    csvContent += "Order ID,Customer Name,Phone,Soup Base,Lobster-flavoured balls,Stuffed squid rolls,Golden seafood rolls,Scallop-style seafood tofu,Fishball,Total Price ($),Pickup Slot,Payment Method,Payment Ref,Status,Created At\n";
 
     cleanOrders.forEach(o => {
       const lobster = o.items["Lobster-flavoured balls"] || 0;
       const squid = o.items["Stuffed squid rolls"] || 0;
       const golden = o.items["Golden seafood rolls"] || 0;
       const scallop = o.items["Scallop-style seafood tofu"] || 0;
+      const fishball = o.items["Fishball"] || 0;
       const cleanPhone = o.phone.replace(/,/g, ""); 
       const cleanName = o.customer_name.replace(/,/g, "");
 
-      csvContent += `${o.id},${cleanName},${cleanPhone},${o.soup_base},${lobster},${squid},${golden},${scallop},${parseFloat(o.total_price).toFixed(2)},${o.pickup_time},${o.payment_method.toUpperCase()},${o.payment_ref || "N/A"},${o.status},${o.created_at}\n`;
+      csvContent += `${o.id},${cleanName},${cleanPhone},${o.soup_base},${lobster},${squid},${golden},${scallop},${fishball},${parseFloat(o.total_price).toFixed(2)},${o.pickup_time},${o.payment_method.toUpperCase()},${o.payment_ref || "N/A"},${o.status},${o.created_at}\n`;
     });
 
     const encodedUri = encodeURI(csvContent);
@@ -257,17 +259,18 @@ export default function AdminPage() {
     }
 
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Order ID,Customer Name,Phone,Soup Base,Lobster-flavoured balls,Stuffed squid rolls,Golden seafood rolls,Scallop-style seafood tofu,Total Price ($),Pickup Slot,Payment Method,Payment Ref,Status,Created At\n";
+    csvContent += "Order ID,Customer Name,Phone,Soup Base,Lobster-flavoured balls,Stuffed squid rolls,Golden seafood rolls,Scallop-style seafood tofu,Fishball,Total Price ($),Pickup Slot,Payment Method,Payment Ref,Status,Created At\n";
 
     todayOrders.forEach(o => {
       const lobster = o.items["Lobster-flavoured balls"] || 0;
       const squid = o.items["Stuffed squid rolls"] || 0;
       const golden = o.items["Golden seafood rolls"] || 0;
       const scallop = o.items["Scallop-style seafood tofu"] || 0;
+      const fishball = o.items["Fishball"] || 0;
       const cleanPhone = o.phone.replace(/,/g, ""); 
       const cleanName = o.customer_name.replace(/,/g, "");
 
-      csvContent += `${o.id},${cleanName},${cleanPhone},${o.soup_base},${lobster},${squid},${golden},${scallop},${parseFloat(o.total_price).toFixed(2)},${o.pickup_time},${o.payment_method.toUpperCase()},${o.payment_ref || "N/A"},${o.status},${o.created_at}\n`;
+      csvContent += `${o.id},${cleanName},${cleanPhone},${o.soup_base},${lobster},${squid},${golden},${scallop},${fishball},${parseFloat(o.total_price).toFixed(2)},${o.pickup_time},${o.payment_method.toUpperCase()},${o.payment_ref || "N/A"},${o.status},${o.created_at}\n`;
     });
 
     const encodedUri = encodeURI(csvContent);

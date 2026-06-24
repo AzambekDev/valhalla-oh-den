@@ -30,14 +30,16 @@ const SKEWER_PRICES = {
   "Lobster-flavoured balls": 3.00,
   "Stuffed squid rolls": 3.00,
   "Golden seafood rolls": 3.00,
-  "Scallop-style seafood tofu": 3.00
+  "Scallop-style seafood tofu": 3.00,
+  "Fishball": 3.00
 };
 
 const SKEWER_DESCRIPTIONS = {
   "Lobster-flavoured balls": "Bouncy and juicy balls packed with a rich, savory lobster flavor.",
   "Stuffed squid rolls": "Tender squid rolls generously stuffed with a savory seafood filling.",
   "Golden seafood rolls": "Crispy, golden-fried rolls bursting with a delicious seafood blend.",
-  "Scallop-style seafood tofu": "Silky, smooth tofu infused with the sweet and delicate essence of scallops."
+  "Scallop-style seafood tofu": "Silky, smooth tofu infused with the sweet and delicate essence of scallops.",
+  "Fishball": "Classic seasoned bouncy fishballs, perfectly steamed to capture natural juices."
 };
 
 const SOUP_DETAILS = {
@@ -491,14 +493,16 @@ export default function ClientPage() {
         "Lobster-flavoured balls": 0,
         "Stuffed squid rolls": 0,
         "Golden seafood rolls": 0,
-        "Scallop-style seafood tofu": 0
+        "Scallop-style seafood tofu": 0,
+        "Fishball": 0
       };
     } catch (e) {
       return {
         "Lobster-flavoured balls": 0,
         "Stuffed squid rolls": 0,
         "Golden seafood rolls": 0,
-        "Scallop-style seafood tofu": 0
+        "Scallop-style seafood tofu": 0,
+        "Fishball": 0
       };
     }
   });
@@ -524,7 +528,8 @@ export default function ClientPage() {
       "Lobster-flavoured balls": 0,
       "Stuffed squid rolls": 0,
       "Golden seafood rolls": 0,
-      "Scallop-style seafood tofu": 0
+      "Scallop-style seafood tofu": 0,
+      "Fishball": 0
     };
     
     // 4. Randomly distribute the skewers
@@ -773,7 +778,8 @@ export default function ClientPage() {
         "Lobster-flavoured balls": 0,
         "Stuffed squid rolls": 0,
         "Golden seafood rolls": 0,
-        "Scallop-style seafood tofu": 0
+        "Scallop-style seafood tofu": 0,
+        "Fishball": 0
       });
       setCustName("");
       setCustPhone("");

@@ -517,7 +517,7 @@ const MOCK_PHONES = [
 ];
 const MOCK_SOUPS = ["Tom-Yum", "Kimchi"];
 const MOCK_ITEMS = [
-  "Lobster-flavoured balls", "Stuffed squid rolls", "Golden seafood rolls", "Scallop-style seafood tofu"
+  "Lobster-flavoured balls", "Stuffed squid rolls", "Golden seafood rolls", "Scallop-style seafood tofu", "Fishball"
 ];
 const MOCK_STATUSES = ["pending", "preparing", "ready", "completed"];
 const MOCK_SLOTS = ["11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM"];
