@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   ShoppingBag, 
   Flame, 
@@ -88,6 +88,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("client");
   const [headerTimeStr, setHeaderTimeStr] = useState("");
   const [supabaseActive, setSupabaseActive] = useState(false);
+  const [isPortalMode, setIsPortalMode] = useState(false);
+  const pressTimer = useRef(null);
 
   // 🔐 Secure Passcode States
   const [passcodeInput, setPasscodeInput] = useState("");
@@ -171,6 +173,20 @@ export default function App() {
     setActiveTab("client");
   };
 
+  // Secret 3-second long press to unlock hidden tabs
+  const handleSecretPointerDown = () => {
+    pressTimer.current = setTimeout(() => {
+      setIsPortalMode(true);
+      alert("🥷 Covert Access Granted: Admin tabs revealed. (Security Passcode still required)");
+    }, 3000);
+  };
+
+  const handleSecretPointerCancel = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+    }
+  };
+
   const currentRoleName = activeTab === "worker" ? "Prep Kitchen" : "Manager Dashboard";
   const isCurrentlyLocked = (activeTab === "worker" && !isWorkerUnlocked) || (activeTab === "admin" && !isAdminUnlocked);
 
@@ -186,7 +202,14 @@ export default function App() {
           />
           <div style={{ display: "flex", flexDirection: "column" }}>
             <span className="brand-name">Valhalla Oh-Den!</span>
-            <span style={{ fontSize: "0.65rem", color: "var(--color-text-muted)" }}>Simmering Atrium System</span>
+            <span 
+              style={{ fontSize: "0.65rem", color: "var(--color-text-muted)", cursor: "default", userSelect: "none", WebkitUserSelect: "none" }}
+              onPointerDown={handleSecretPointerDown}
+              onPointerUp={handleSecretPointerCancel}
+              onPointerLeave={handleSecretPointerCancel}
+            >
+              Simmering Atrium System
+            </span>
           </div>
         </div>
 
@@ -199,21 +222,25 @@ export default function App() {
             <ShoppingBag size={15} /> Pre-Order
           </button>
           
-          <button 
-            className={`nav-tab-btn ${activeTab === "worker" ? "active" : ""}`}
-            onClick={() => setActiveTab("worker")}
-          >
-            {isWorkerUnlocked ? <Unlock size={14} style={{ color: "var(--color-success)" }} /> : <Lock size={14} />}
-            Kitchen Prep
-          </button>
-          
-          <button 
-            className={`nav-tab-btn ${activeTab === "admin" ? "active" : ""}`}
-            onClick={() => setActiveTab("admin")}
-          >
-            {isAdminUnlocked ? <Unlock size={14} style={{ color: "var(--color-success)" }} /> : <Lock size={14} />}
-            Manager Settings
-          </button>
+          {(isPortalMode || window.location.search.includes("staff=true")) && (
+            <>
+              <button 
+                className={`nav-tab-btn ${activeTab === "worker" ? "active" : ""}`}
+                onClick={() => setActiveTab("worker")}
+              >
+                {isWorkerUnlocked ? <Unlock size={14} style={{ color: "var(--color-success)" }} /> : <Lock size={14} />}
+                Kitchen Prep
+              </button>
+              
+              <button 
+                className={`nav-tab-btn ${activeTab === "admin" ? "active" : ""}`}
+                onClick={() => setActiveTab("admin")}
+              >
+                {isAdminUnlocked ? <Unlock size={14} style={{ color: "var(--color-success)" }} /> : <Lock size={14} />}
+                Manager Settings
+              </button>
+            </>
+          )}
         </nav>
 
         {/* Header Action Elements */}

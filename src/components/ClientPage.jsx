@@ -13,8 +13,11 @@ import {
   Upload,
   FileImage,
   MapPin,
-  X
+  X,
+  Maximize,
+  Download
 } from "lucide-react";
+import Tesseract from "tesseract.js";
 import { 
   getCurrentTime, 
   getOrderingStatus, 
@@ -511,6 +514,53 @@ export default function ClientPage() {
   const [pickupTime, setPickupTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 🎲 "I'm Feeling Lucky" Game States
+  const [isLuckyModalOpen, setIsLuckyModalOpen] = useState(false);
+  const [luckyTarget, setLuckyTarget] = useState(null);
+  const [luckyRolled, setLuckyRolled] = useState(null);
+  const [luckyWon, setLuckyWon] = useState(false);
+  const [hasPlayedLucky, setHasPlayedLucky] = useState(false);
+  const [isRolling, setIsRolling] = useState(false);
+
+  // 🔍 QR Scanning & Modal States
+  const [isScanningQR, setIsScanningQR] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+
+  const openLuckyGame = () => {
+    if (hasPlayedLucky) return;
+    const target = Math.floor(Math.random() * 11) + 2; // 2 to 12
+    setLuckyTarget(target);
+    setLuckyRolled(null);
+    setIsLuckyModalOpen(true);
+  };
+
+  const rollLuckyDice = () => {
+    setIsRolling(true);
+    setTimeout(() => {
+      const probStr = localStorage.getItem("oden_lucky_prob");
+      const winProbability = probStr !== null ? parseFloat(probStr) : 0.001;
+      const isWin = Math.random() < winProbability;
+      let rolledSum;
+      if (isWin) {
+        rolledSum = luckyTarget;
+      } else {
+        do {
+          rolledSum = Math.floor(Math.random() * 11) + 2;
+        } while (rolledSum === luckyTarget);
+      }
+      
+      setLuckyRolled(rolledSum);
+      setLuckyWon(isWin);
+      setHasPlayedLucky(true);
+      setIsRolling(false);
+      
+      // If won, switch to Cash automatically
+      if (isWin) {
+        setPaymentMethod("cash");
+      }
+    }, 1500); // 1.5 seconds rolling animation
+  };
+
   // 🎲 Mystery Oden States & Randomizer Logic
   const [mysteryBudget, setMysteryBudget] = useState(14); // Default: RM 14 (3 skewers)
   const [mysteryResult, setMysteryResult] = useState(null); // Premium UI result modal trigger state
@@ -557,6 +607,7 @@ export default function ClientPage() {
   const [paymentRef, setPaymentRef] = useState("");
   const [paymentSlip, setPaymentSlip] = useState(null); // base64 string
   const [slipFileName, setSlipFileName] = useState("");
+  const [receiptFlags, setReceiptFlags] = useState({ amountMatch: false, nameMatch: false, isFresh: true });
 
   // DuitNow QR settings
   const [tngNumber, setTngNumber] = useState("+601164188797");
@@ -658,9 +709,87 @@ export default function ClientPage() {
 
     setSlipFileName(file.name);
 
+    // 1. Freshness Check
+    const fifteenMins = 15 * 60 * 1000;
+    const now = Date.now();
+    let isFresh = true;
+    if (file.lastModified && (now - file.lastModified > fifteenMins)) {
+      alert("⚠️ This screenshot appears to be older than 15 minutes. Your order will be flagged for manual review.");
+      isFresh = false;
+    }
+
     const reader = new FileReader();
-    reader.onload = (event) => {
-      setPaymentSlip(event.target.result); // Base64 string
+    reader.onload = async (event) => {
+      const base64Image = event.target.result;
+      setPaymentSlip(base64Image); // Base64 string
+
+      // Start OCR Processing
+      setIsScanningQR(true);
+      try {
+        const { data: { text } } = await Tesseract.recognize(base64Image, 'eng');
+        console.log("OCR Raw Text:\n", text); // Debugging
+
+        // ----- HEURISTIC VERIFICATION -----
+        const expectedTotalStr = calculateTotal().toFixed(2);
+        const amountMatch = text.includes(expectedTotalStr);
+        
+        // Ensure name matching ignores case
+        const nameMatch = text.toUpperCase().includes("AZAMBEK") || text.toUpperCase().includes("SATTAROV");
+
+        setReceiptFlags({
+          amountMatch,
+          nameMatch,
+          isFresh
+        });
+
+        console.log(`Receipt Verification => Amount Match: ${amountMatch}, Name Match: ${nameMatch}, Fresh: ${isFresh}`);
+
+        let extractedId = null;
+        const lines = text.split('\n');
+        const keywords = ['ref', 'reference', 'transaction', 'trx', 'txn', 'id'];
+
+        // Strategy 1: Look for keywords in each line
+        for (const line of lines) {
+          const lowerLine = line.toLowerCase();
+          if (keywords.some(k => lowerLine.includes(k))) {
+            // Split by spaces, colons, hyphens
+            const tokens = line.split(/[:\s-]+/);
+            // Look for a token that is at least 6 characters long and contains numbers
+            const possibleId = tokens.find(t => t.length >= 6 && /\d/.test(t) && !t.toLowerCase().includes('date') && !t.toLowerCase().includes('time'));
+            if (possibleId) {
+              extractedId = possibleId;
+              break;
+            }
+          }
+        }
+
+        // Strategy 2: Look for generic TNG formats
+        if (!extractedId) {
+          const cleanText = text.replace(/\s+/g, '');
+          const tngMatch = cleanText.match(/TNG-?[A-Z0-9]{5,}/i);
+          if (tngMatch) extractedId = tngMatch[0];
+        }
+
+        // Strategy 3: Look for any sequence of 8 to 20 digits (e.g., standard bank transfer IDs)
+        if (!extractedId) {
+          const cleanText = text.replace(/\s+/g, '');
+          const numMatch = cleanText.match(/\d{8,20}/);
+          if (numMatch) extractedId = numMatch[0];
+        }
+        
+        if (extractedId) {
+          const finalRef = extractedId.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+          setPaymentRef(finalRef);
+          alert("Success! Transaction ID auto-extracted from receipt: " + finalRef);
+        } else {
+          console.warn("OCR could not find a matching reference number.");
+          alert("Could not automatically read the Transaction ID. Please enter it manually.");
+        }
+      } catch (err) {
+        console.error("OCR Failed:", err);
+      } finally {
+        setIsScanningQR(false);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -674,6 +803,7 @@ export default function ClientPage() {
   };
 
   const calculateTotal = () => {
+    if (luckyWon) return 0;
     let sum = 0;
     Object.keys(skewerQty).forEach(key => {
       sum += skewerQty[key] * (SKEWER_PRICES[key] || 0);
@@ -748,7 +878,8 @@ export default function ClientPage() {
       pickup_time: pickupTime,
       payment_method: paymentMethod,
       payment_ref: paymentMethod === "tng" ? paymentRef.trim() : "",
-      payment_slip: paymentMethod === "tng" ? paymentSlip : null
+      payment_slip: paymentMethod === "tng" ? paymentSlip : null,
+      receipt_flags: paymentMethod === "tng" ? receiptFlags : null
     };
 
     try {
@@ -788,6 +919,9 @@ export default function ClientPage() {
       setPaymentRef("");
       setPaymentSlip(null);
       setSlipFileName("");
+      setReceiptFlags({ amountMatch: false, nameMatch: false, isFresh: true });
+      setHasPlayedLucky(false);
+      setLuckyWon(false);
       localStorage.removeItem("valhalla_cached_soup");
       localStorage.removeItem("valhalla_cached_skewers");
       setCurrentStep(1);
@@ -1303,6 +1437,19 @@ export default function ClientPage() {
                 </div>
               </div>
 
+              {/* 🎲 I'm Feeling Lucky Button */}
+              <div style={{ paddingBottom: "1.5rem" }}>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={openLuckyGame}
+                  disabled={hasPlayedLucky}
+                  style={{ width: "100%", background: luckyWon ? "var(--accent-gold)" : "var(--bg-card)", color: luckyWon ? "var(--bg-main)" : "var(--accent-gold)", borderColor: "var(--accent-gold)" }}
+                >
+                  <span style={{ fontSize: "1.2rem", marginRight: "0.5rem" }}>🎲</span>
+                  {luckyWon ? "YOU WON! Order is FREE!" : (hasPlayedLucky ? "Better luck next time!" : "I'm Feeling Lucky (Roll for a free order!)")}
+                </button>
+              </div>
+
               {/* 💵 Payment Method Selection */}
               <div style={{ borderTop: "1px solid var(--border-light)", paddingTop: "1.5rem" }}>
                 <span className="form-label" style={{ marginBottom: "0.75rem", display: "block", fontSize: "0.9rem", fontWeight: 700 }}>
@@ -1348,12 +1495,20 @@ export default function ClientPage() {
                   <div className="tng-payment-grid">
                     
                     {/* Real Touch 'n Go DuitNow QR Image */}
-                    <div style={{ background: "white", padding: "0.4rem", borderRadius: "8px", boxShadow: "0 4px 10px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
+                    <div 
+                      onClick={() => setIsQRModalOpen(true)}
+                      style={{ background: "white", padding: "0.4rem", borderRadius: "8px", boxShadow: "0 4px 10px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem", cursor: "pointer", transition: "transform 0.2s" }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                    >
                       <img 
                         src="/tng_qr.jpg" 
                         alt="Touch 'n Go DuitNow QR Code" 
                         style={{ width: "95px", height: "auto", borderRadius: "6px", display: "block" }}
                       />
+                      <div style={{ fontSize: "0.6rem", color: "var(--color-text-dim)", fontWeight: 700, marginTop: "0.2rem", textTransform: "uppercase" }}>
+                        <Maximize size={10} style={{ display: "inline", verticalAlign: "middle", marginRight: "2px", marginBottom: "1px" }} /> Click to enlarge
+                      </div>
                     </div>
 
                     {/* DuitNow Transfer Details & Inputs */}
@@ -1389,13 +1544,20 @@ export default function ClientPage() {
                               accept="image/*"
                               onChange={handleFileChange}
                               style={{ display: "none" }}
+                              disabled={isScanningQR}
                             />
                             <label 
                               htmlFor="slip-upload" 
                               className="btn btn-secondary"
-                              style={{ padding: "0.5rem", fontSize: "0.75rem", borderRadius: "8px", cursor: "pointer", width: "100%", justifyContent: "center", gap: "0.25rem" }}
+                              style={{ padding: "0.5rem", fontSize: "0.75rem", borderRadius: "8px", cursor: isScanningQR ? "not-allowed" : "pointer", width: "100%", justifyContent: "center", gap: "0.25rem", opacity: isScanningQR ? 0.7 : 1 }}
                             >
-                              <Upload size={13} /> {slipFileName ? "Uploaded ✓" : "Browse"}
+                              {isScanningQR ? (
+                                <>Scanning Receipt... <span className="ocr-spinner" style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>🔄</span></>
+                              ) : slipFileName ? (
+                                <>Uploaded ✓</>
+                              ) : (
+                                <><Upload size={13} /> Browse</>
+                              )}
                             </label>
                           </div>
                         </div>
@@ -1525,6 +1687,102 @@ export default function ClientPage() {
           </div>
         </div>
       </div>
+
+      {/* 🎲 Lucky Modal */}
+      {isLuckyModalOpen && (
+        <div className="lucky-modal-overlay">
+          <div className="lucky-modal-content">
+            <button className="mystery-close-btn" onClick={() => !isRolling && setIsLuckyModalOpen(false)}>
+              <X size={16} />
+            </button>
+            <h2 style={{ color: "var(--accent-gold)", margin: "0 0 1rem 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+              I'm Feeling Lucky! 🎲
+            </h2>
+            <p style={{ marginBottom: "1.5rem", fontSize: "0.9rem", color: "var(--color-text-main)", textAlign: "center", lineHeight: "1.5" }}>
+              Roll the dice and if the sum matches your target, your entire bowl is <strong>100% FREE!</strong>
+            </p>
+
+            <div style={{ background: "rgba(255,255,255,0.05)", padding: "1.5rem", borderRadius: "12px", marginBottom: "1.5rem", textAlign: "center" }}>
+              <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "1px" }}>Target Number</div>
+              <div style={{ fontSize: "3.5rem", fontWeight: 800, color: "var(--color-text-main)", lineHeight: "1", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                {luckyTarget}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginBottom: "2rem" }}>
+              <div className={`dice-cube ${isRolling ? "rolling" : ""}`}>
+                {luckyRolled ? Math.max(1, Math.min(6, Math.floor(luckyRolled / 2))) : "?"}
+              </div>
+              <div className={`dice-cube ${isRolling ? "rolling" : ""}`}>
+                {luckyRolled ? (luckyRolled - Math.max(1, Math.min(6, Math.floor(luckyRolled / 2)))) : "?"}
+              </div>
+            </div>
+
+            {luckyRolled && !isRolling && (
+              <div style={{ textAlign: "center", marginBottom: "1.5rem", animation: "slideUp 0.3s ease" }}>
+                <div style={{ fontSize: "1.5rem", fontWeight: 700, color: luckyWon ? "var(--color-success)" : "var(--accent-red)", marginBottom: "0.5rem" }}>
+                  {luckyWon ? "JACKPOT! YOU WIN!" : "Aww, not this time!"}
+                </div>
+                <div style={{ fontSize: "0.9rem", color: "var(--color-text-muted)" }}>
+                  You rolled a {luckyRolled}.
+                </div>
+              </div>
+            )}
+
+            {!luckyRolled && !isRolling && (
+              <button 
+                className="btn btn-primary"
+                onClick={rollLuckyDice}
+                style={{ width: "100%", background: "var(--accent-gold)", color: "var(--bg-main)", padding: "1rem", fontSize: "1.1rem", borderRadius: "8px", border: "none", boxShadow: "0 4px 15px rgba(242, 161, 38, 0.3)" }}
+              >
+                ROLL THE DICE!
+              </button>
+            )}
+
+            {(luckyRolled && !isRolling) && (
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setIsLuckyModalOpen(false)}
+                style={{ width: "100%", padding: "0.8rem", borderRadius: "8px" }}
+              >
+                {luckyWon ? "Claim Free Order" : "Continue to Payment"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 🔍 QR Modal */}
+      {isQRModalOpen && (
+        <div className="lucky-modal-overlay" onClick={() => setIsQRModalOpen(false)}>
+          <div className="lucky-modal-content" onClick={e => e.stopPropagation()} style={{ textAlign: "center", padding: "1.5rem" }}>
+            <button className="mystery-close-btn" onClick={() => setIsQRModalOpen(false)} style={{ top: "-10px", right: "-10px", background: "var(--bg-card)" }}>
+              <X size={16} />
+            </button>
+            <h2 style={{ color: "var(--accent-gold)", margin: "0 0 1rem 0" }}>Touch 'n Go QR</h2>
+            <div style={{ background: "white", padding: "1rem", borderRadius: "12px", display: "inline-block", margin: "0.5rem 0 1.5rem 0" }}>
+              <img src="/tng_qr.jpg" alt="Enlarged QR Code" style={{ width: "280px", maxWidth: "100%", height: "auto", borderRadius: "8px", display: "block" }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <a 
+                href="/tng_qr.jpg" 
+                download="tng_qr.jpg"
+                className="btn btn-primary"
+                style={{ width: "100%", justifyContent: "center", background: "var(--accent-gold)", color: "var(--bg-main)" }}
+              >
+                <Download size={16} style={{ marginRight: "0.5rem" }} /> Download QR Code
+              </a>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setIsQRModalOpen(false)}
+                style={{ width: "100%", justifyContent: "center" }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -397,7 +397,8 @@ export async function ensureStallSettings() {
           soup_base: "System",
           items: {
             force_status: localStorage.getItem("oden_force_status") || "auto",
-            cutoff_time: localStorage.getItem("oden_cutoff_time") || "16:00"
+            cutoff_time: localStorage.getItem("oden_cutoff_time") || "16:00",
+            lucky_prob: localStorage.getItem("oden_lucky_prob") || "0.001"
           },
           total_price: 0,
           pickup_time: "System",
@@ -424,7 +425,8 @@ export async function ensureStallSettings() {
         soup_base: "System",
         items: {
           force_status: localStorage.getItem("oden_force_status") || "auto",
-          cutoff_time: localStorage.getItem("oden_cutoff_time") || "16:00"
+          cutoff_time: localStorage.getItem("oden_cutoff_time") || "16:00",
+          lucky_prob: localStorage.getItem("oden_lucky_prob") || "0.001"
         },
         total_price: 0,
         pickup_time: "System",
@@ -446,13 +448,15 @@ export async function ensureStallSettings() {
 /**
  * Synchronizes force status and cutoff time to the STALL_SETTINGS row in cloud DB.
  */
-export async function syncStallSettings(forceStatus, cutoffTime) {
+export async function syncStallSettings(forceStatus, cutoffTime, luckyProb) {
   const currentForce = forceStatus !== undefined ? forceStatus : (localStorage.getItem("oden_force_status") || "auto");
   const currentCutoff = cutoffTime !== undefined ? cutoffTime : (localStorage.getItem("oden_cutoff_time") || "16:00");
+  const currentProb = luckyProb !== undefined ? luckyProb : (localStorage.getItem("oden_lucky_prob") || "0.001");
   
   // Save locally immediately for snappy responsiveness
   localStorage.setItem("oden_force_status", currentForce);
   localStorage.setItem("oden_cutoff_time", currentCutoff);
+  localStorage.setItem("oden_lucky_prob", currentProb);
   window.dispatchEvent(new Event("storage"));
 
   const supabase = getSupabaseClient();
@@ -464,7 +468,8 @@ export async function syncStallSettings(forceStatus, cutoffTime) {
         .update({
           items: {
             force_status: currentForce,
-            cutoff_time: currentCutoff
+            cutoff_time: currentCutoff,
+            lucky_prob: currentProb
           }
         })
         .eq("id", "STALL_SETTINGS");
@@ -479,7 +484,8 @@ export async function syncStallSettings(forceStatus, cutoffTime) {
     if (match) {
       match.items = {
         force_status: currentForce,
-        cutoff_time: currentCutoff
+        cutoff_time: currentCutoff,
+        lucky_prob: currentProb
       };
     } else {
       orders.push({
@@ -489,7 +495,8 @@ export async function syncStallSettings(forceStatus, cutoffTime) {
         soup_base: "System",
         items: {
           force_status: currentForce,
-          cutoff_time: currentCutoff
+          cutoff_time: currentCutoff,
+          lucky_prob: currentProb
         },
         total_price: 0,
         pickup_time: "System",

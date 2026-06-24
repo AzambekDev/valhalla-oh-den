@@ -33,6 +33,7 @@ export default function AdminPage() {
   const itemsPerPage = 25;
   const [cutoffVal, setCutoffVal] = useState("16:00");
   const [forceStatus, setForceStatus] = useState("auto"); // 'auto', 'open', 'closed'
+  const [luckyProb, setLuckyProb] = useState("0.001");
   // DuitNow TnG configurations
   const [tngNumber, setTngNumber] = useState("+601164188797");
   const [tngName, setTngName] = useState("SATTAROV AZAMBEK XXX");
@@ -59,6 +60,7 @@ export default function AdminPage() {
   useEffect(() => {
     setCutoffVal(getCutoffTime());
     setForceStatus(localStorage.getItem("oden_force_status") || "auto");
+    setLuckyProb(localStorage.getItem("oden_lucky_prob") || "0.001");
     
     // Load DuitNow config
     setTngNumber(localStorage.getItem("oden_tng_number") || "+601164188797");
@@ -76,6 +78,7 @@ export default function AdminPage() {
     const handleStorageChange = async () => {
       setCutoffVal(getCutoffTime());
       setForceStatus(localStorage.getItem("oden_force_status") || "auto");
+      setLuckyProb(localStorage.getItem("oden_lucky_prob") || "0.001");
       setTngNumber(localStorage.getItem("oden_tng_number") || "+601164188797");
       setTngName(localStorage.getItem("oden_tng_name") || "SATTAROV AZAMBEK XXX");
       const allOrders = await getOrders();
@@ -137,12 +140,18 @@ export default function AdminPage() {
   const handleCutoffChange = async (e) => {
     const newVal = e.target.value;
     setCutoffVal(newVal);
-    await syncStallSettings(undefined, newVal);
+    await syncStallSettings(undefined, newVal, undefined);
   };
 
   const handleForceStatus = async (status) => {
     setForceStatus(status);
-    await syncStallSettings(status, undefined);
+    await syncStallSettings(status, undefined, undefined);
+  };
+
+  const handleLuckyProbChange = async (e) => {
+    const newVal = e.target.value;
+    setLuckyProb(newVal);
+    await syncStallSettings(undefined, undefined, newVal);
   };
 
   // 🔐 Secure plain-text passcode updates (hashes in SHA-256 before saving)
@@ -455,6 +464,38 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* Lucky Dice Probability */}
+            <div className="toggle-switch-wrapper" style={{ flexDirection: "column", alignItems: "stretch", gap: "0.5rem" }}>
+              <div className="toggle-info">
+                <span className="toggle-label" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                  🎲 Lucky Dice Win Chance (%)
+                </span>
+                <span className="toggle-desc">Set the probability for a free order. Currently: {(parseFloat(luckyProb)*100).toFixed(3)}%</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="100" 
+                  step="0.001"
+                  value={luckyProb * 100}
+                  onChange={async (e) => {
+                    let val = parseFloat(e.target.value);
+                    if (isNaN(val)) val = 0;
+                    const rawVal = (val / 100).toString();
+                    setLuckyProb(rawVal);
+                    await syncStallSettings(undefined, undefined, rawVal);
+                  }}
+                  className="form-input"
+                  style={{ flex: 1, padding: "0.5rem" }}
+                  placeholder="e.g. 0.1 for 0.1%"
+                />
+                <span style={{ fontWeight: 800, color: "var(--accent-gold)", minWidth: "20px", textAlign: "right" }}>
+                  %
+                </span>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -691,9 +732,16 @@ export default function AdminPage() {
                       {/* Payment method */}
                       <td>
                         {order.payment_method === "tng" ? (
-                          <span className="table-status ready" style={{ fontSize: "0.7rem", background: "rgba(242,161,38,0.15)", color: "var(--accent-gold)", fontWeight: 800 }}>
-                            📲 TnG ({order.payment_ref.slice(-4)})
-                          </span>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "4px" }}>
+                            <span className="table-status ready" style={{ fontSize: "0.7rem", background: "rgba(242,161,38,0.15)", color: "var(--accent-gold)", fontWeight: 800 }}>
+                              📲 TnG ({order.payment_ref.slice(-4)})
+                            </span>
+                            {order.receipt_flags && (!order.receipt_flags.amountMatch || !order.receipt_flags.nameMatch || !order.receipt_flags.isFresh) && (
+                              <span style={{ fontSize: "0.65rem", color: "var(--accent-red)", fontWeight: 800, marginTop: "2px" }} title={`Amount Match: ${order.receipt_flags.amountMatch}, Name Match: ${order.receipt_flags.nameMatch}, Fresh: ${order.receipt_flags.isFresh}`}>
+                                🚩 Suspicious Receipt
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="table-status pending" style={{ fontSize: "0.7rem", background: "rgba(52,211,153,0.15)", color: "var(--color-success)", fontWeight: 800 }}>
                             💵 Cash
