@@ -27,19 +27,17 @@ import { addOrder, subscribeOrders } from "../utils/db";
 
 // Custom Menu Pricing (All skewers set to RM 3.00)
 const SKEWER_PRICES = {
-  "Cheese Tofu": 3.00,
-  "Fish Sandwich": 3.00,
-  "Seafood Tofu": 3.00,
-  "Fish Ball": 3.00,
-  "Seafood Beancurd Roll": 3.00
+  "Lobster-flavoured balls": 3.00,
+  "Stuffed squid rolls": 3.00,
+  "Golden seafood rolls": 3.00,
+  "Scallop-style seafood tofu": 3.00
 };
 
 const SKEWER_DESCRIPTIONS = {
-  "Cheese Tofu": "Soft premium soybean cake stuffed with melting cheddar cheese center.",
-  "Fish Sandwich": "Bouncy fish cake layer filled with a succulent, savory seafood spread.",
-  "Seafood Tofu": "Creamy, dense tofu cubes blended with rich and delicate seafood pieces.",
-  "Fish Ball": "Classic seasoned bouncy fish balls, perfectly steamed to capture natural juices.",
-  "Seafood Beancurd Roll": "Fragrant crispy bean curd sheet wrapped around minced ocean seafood."
+  "Lobster-flavoured balls": "Bouncy and juicy balls packed with a rich, savory lobster flavor.",
+  "Stuffed squid rolls": "Tender squid rolls generously stuffed with a savory seafood filling.",
+  "Golden seafood rolls": "Crispy, golden-fried rolls bursting with a delicious seafood blend.",
+  "Scallop-style seafood tofu": "Silky, smooth tofu infused with the sweet and delicate essence of scallops."
 };
 
 const SOUP_DETAILS = {
@@ -490,19 +488,17 @@ export default function ClientPage() {
     try {
       const saved = localStorage.getItem("valhalla_cached_skewers");
       return saved ? JSON.parse(saved) : {
-        "Cheese Tofu": 0,
-        "Fish Sandwich": 0,
-        "Seafood Tofu": 0,
-        "Fish Ball": 0,
-        "Seafood Beancurd Roll": 0
+        "Lobster-flavoured balls": 0,
+        "Stuffed squid rolls": 0,
+        "Golden seafood rolls": 0,
+        "Scallop-style seafood tofu": 0
       };
     } catch (e) {
       return {
-        "Cheese Tofu": 0,
-        "Fish Sandwich": 0,
-        "Seafood Tofu": 0,
-        "Fish Ball": 0,
-        "Seafood Beancurd Roll": 0
+        "Lobster-flavoured balls": 0,
+        "Stuffed squid rolls": 0,
+        "Golden seafood rolls": 0,
+        "Scallop-style seafood tofu": 0
       };
     }
   });
@@ -525,11 +521,10 @@ export default function ClientPage() {
     
     // 3. Reset all skewer quantities
     const freshSkewers = {
-      "Cheese Tofu": 0,
-      "Fish Sandwich": 0,
-      "Seafood Tofu": 0,
-      "Fish Ball": 0,
-      "Seafood Beancurd Roll": 0
+      "Lobster-flavoured balls": 0,
+      "Stuffed squid rolls": 0,
+      "Golden seafood rolls": 0,
+      "Scallop-style seafood tofu": 0
     };
     
     // 4. Randomly distribute the skewers
@@ -775,11 +770,10 @@ export default function ClientPage() {
       setActiveOrder(null);
       setSoupBase("");
       setSkewerQty({
-        "Cheese Tofu": 0,
-        "Fish Sandwich": 0,
-        "Seafood Tofu": 0,
-        "Fish Ball": 0,
-        "Seafood Beancurd Roll": 0
+        "Lobster-flavoured balls": 0,
+        "Stuffed squid rolls": 0,
+        "Golden seafood rolls": 0,
+        "Scallop-style seafood tofu": 0
       });
       setCustName("");
       setCustPhone("");
