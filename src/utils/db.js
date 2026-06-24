@@ -268,13 +268,16 @@ export function subscribeOrders(callback) {
     if (settingsOrder && settingsOrder.items) {
       const cloudForce = settingsOrder.items.force_status || "auto";
       const cloudCutoff = settingsOrder.items.cutoff_time || "16:00";
+      const cloudProb = settingsOrder.items.lucky_prob || "0.001";
       
       const localForce = localStorage.getItem("oden_force_status") || "auto";
       const localCutoff = localStorage.getItem("oden_cutoff_time") || "16:00";
+      const localProb = localStorage.getItem("oden_lucky_prob") || "0.001";
       
-      if (cloudForce !== localForce || cloudCutoff !== localCutoff) {
+      if (cloudForce !== localForce || cloudCutoff !== localCutoff || cloudProb !== localProb) {
         localStorage.setItem("oden_force_status", cloudForce);
         localStorage.setItem("oden_cutoff_time", cloudCutoff);
+        localStorage.setItem("oden_lucky_prob", cloudProb);
         window.dispatchEvent(new Event("storage"));
       }
     }
