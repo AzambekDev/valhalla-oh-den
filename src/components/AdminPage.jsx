@@ -116,7 +116,8 @@ export default function AdminPage() {
       if (order.soup_base === "Tom-Yum") tomYum++;
       if (order.soup_base === "Kimchi") kimchi++;
 
-      Object.keys(order.items).forEach(name => {
+      Object.keys(order.items || {}).forEach(name => {
+        if (name === '_flags') return;
         const qty = order.items[name] || 0;
         skewersSold += qty;
         if (skewerCounts[name] !== undefined) {
@@ -736,8 +737,8 @@ export default function AdminPage() {
                             <span className="table-status ready" style={{ fontSize: "0.7rem", background: "rgba(242,161,38,0.15)", color: "var(--accent-gold)", fontWeight: 800 }}>
                               📲 TnG ({order.payment_ref.slice(-4)})
                             </span>
-                            {order.receipt_flags && (!order.receipt_flags.amountMatch || !order.receipt_flags.nameMatch || !order.receipt_flags.isFresh) && (
-                              <span style={{ fontSize: "0.65rem", color: "var(--accent-red)", fontWeight: 800, marginTop: "2px" }} title={`Amount Match: ${order.receipt_flags.amountMatch}, Name Match: ${order.receipt_flags.nameMatch}, Fresh: ${order.receipt_flags.isFresh}`}>
+                            {order.items && order.items._flags && (!order.items._flags.amountMatch || !order.items._flags.nameMatch || !order.items._flags.isFresh) && (
+                              <span style={{ fontSize: "0.65rem", color: "var(--accent-red)", fontWeight: 800, marginTop: "2px" }} title={`Amount Match: ${order.items._flags.amountMatch}, Name Match: ${order.items._flags.nameMatch}, Fresh: ${order.items._flags.isFresh}`}>
                                 🚩 Suspicious Receipt
                               </span>
                             )}

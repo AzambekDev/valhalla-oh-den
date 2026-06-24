@@ -869,6 +869,11 @@ export default function ClientPage() {
       }
     });
 
+    // Embed receipt heuristics inside the items JSONB column to avoid strict schema rejection
+    if (paymentMethod === "tng" && receiptFlags) {
+      itemsFiltered["_flags"] = receiptFlags;
+    }
+
     const orderData = {
       customer_name: custName,
       phone: custPhone,
@@ -878,8 +883,7 @@ export default function ClientPage() {
       pickup_time: pickupTime,
       payment_method: paymentMethod,
       payment_ref: paymentMethod === "tng" ? paymentRef.trim() : "",
-      payment_slip: paymentMethod === "tng" ? paymentSlip : null,
-      receipt_flags: paymentMethod === "tng" ? receiptFlags : null
+      payment_slip: paymentMethod === "tng" ? paymentSlip : null
     };
 
     try {

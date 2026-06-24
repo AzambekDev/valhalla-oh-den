@@ -209,7 +209,7 @@ export default function WorkerPage() {
                   </div>
 
                   <div className="order-card-items">
-                    {Object.keys(order.items || {}).map(name => (
+                    {Object.keys(order.items || {}).filter(k => k !== '_flags').map(name => (
                       <div className="order-card-item" key={name}>
                         <span className="order-card-item-name">{name}</span>
                         <span className="order-card-qty">x{(order.items || {})[name]}</span>
@@ -337,7 +337,7 @@ export default function WorkerPage() {
                   </div>
 
                   <div className="order-card-items">
-                    {Object.keys(order.items || {}).map(name => (
+                    {Object.keys(order.items || {}).filter(k => k !== '_flags').map(name => (
                       <div className="order-card-item" key={name}>
                         <span className="order-card-item-name">{name}</span>
                         <span className="order-card-qty">x{(order.items || {})[name]}</span>
@@ -455,7 +455,7 @@ export default function WorkerPage() {
                   </div>
 
                   <div className="order-card-items">
-                    {Object.keys(order.items || {}).map(name => (
+                    {Object.keys(order.items || {}).filter(k => k !== '_flags').map(name => (
                       <div className="order-card-item" key={name}>
                         <span className="order-card-item-name">{name}</span>
                         <span className="order-card-qty">x{(order.items || {})[name]}</span>
@@ -572,7 +572,7 @@ export default function WorkerPage() {
                   </div>
 
                   <div className="order-card-items">
-                    {Object.keys(order.items || {}).map(name => (
+                    {Object.keys(order.items || {}).filter(k => k !== '_flags').map(name => (
                       <div className="order-card-item" key={name}>
                         <span className="order-card-item-name">{name}</span>
                         <span className="order-card-qty">x{(order.items || {})[name]}</span>
