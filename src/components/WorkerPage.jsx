@@ -182,7 +182,11 @@ export default function WorkerPage() {
                     <span className={`order-card-soup ${(order.soup_base || "clear").toLowerCase()}`}>
                       🍲 {order.soup_base || "Clear Soup"}
                     </span>
-                    {order.payment_method === "tng" ? (
+                    {order.payment_method === "free" ? (
+                      <span className="order-card-soup" style={{ background: "rgba(16, 185, 129, 0.15)", color: "var(--color-success)", display: "inline-flex", alignItems: "center", gap: "0.15rem", fontWeight: "bold" }}>
+                        🎉 FREE MEAL
+                      </span>
+                    ) : order.payment_method === "tng" ? (
                       <span 
                         className="order-card-soup" 
                         style={{ background: "rgba(242, 161, 38, 0.12)", color: "var(--accent-gold)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}
@@ -321,7 +325,11 @@ export default function WorkerPage() {
                     <span className={`order-card-soup ${(order.soup_base || "clear").toLowerCase()}`}>
                       🍲 {order.soup_base || "Clear Soup"}
                     </span>
-                    {order.payment_method === "tng" ? (
+                    {order.payment_method === "free" ? (
+                      <span className="order-card-soup" style={{ background: "rgba(16, 185, 129, 0.15)", color: "var(--color-success)", display: "inline-flex", alignItems: "center", gap: "0.15rem", fontWeight: "bold" }}>
+                        🎉 FREE MEAL
+                      </span>
+                    ) : order.payment_method === "tng" ? (
                       <span 
                         className="order-card-soup" 
                         style={{ background: "rgba(242, 161, 38, 0.12)", color: "var(--accent-gold)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}
@@ -439,7 +447,11 @@ export default function WorkerPage() {
                     <span className={`order-card-soup ${(order.soup_base || "clear").toLowerCase()}`}>
                       🍲 {order.soup_base || "Clear Soup"}
                     </span>
-                    {order.payment_method === "tng" ? (
+                    {order.payment_method === "free" ? (
+                      <span className="order-card-soup" style={{ background: "rgba(16, 185, 129, 0.15)", color: "var(--color-success)", display: "inline-flex", alignItems: "center", gap: "0.15rem", fontWeight: "bold" }}>
+                        🎉 FREE MEAL
+                      </span>
+                    ) : order.payment_method === "tng" ? (
                       <span 
                         className="order-card-soup" 
                         style={{ background: "rgba(242, 161, 38, 0.12)", color: "var(--accent-gold)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}
@@ -556,7 +568,11 @@ export default function WorkerPage() {
                     <span className="order-card-soup" style={{ background: "rgba(255, 255, 255, 0.05)", color: "var(--color-text-muted)" }}>
                       🍲 {order.soup_base || "Clear Soup"}
                     </span>
-                    {order.payment_method === "tng" ? (
+                    {order.payment_method === "free" ? (
+                      <span className="order-card-soup" style={{ background: "rgba(255, 255, 255, 0.05)", color: "var(--color-success)", display: "inline-flex", alignItems: "center", gap: "0.15rem", fontWeight: "bold" }}>
+                        🎉 FREE MEAL
+                      </span>
+                    ) : order.payment_method === "tng" ? (
                       <span 
                         className="order-card-soup" 
                         style={{ background: "rgba(255, 255, 255, 0.05)", color: "var(--color-text-muted)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}

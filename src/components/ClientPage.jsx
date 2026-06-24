@@ -874,6 +874,8 @@ export default function ClientPage() {
       itemsFiltered["_flags"] = receiptFlags;
     }
 
+    const finalPaymentMethod = luckyWon ? "free" : paymentMethod;
+
     const orderData = {
       customer_name: custName,
       phone: custPhone,
@@ -881,9 +883,9 @@ export default function ClientPage() {
       items: itemsFiltered,
       total_price: calculateTotal(),
       pickup_time: pickupTime,
-      payment_method: paymentMethod,
-      payment_ref: paymentMethod === "tng" ? paymentRef.trim() : "",
-      payment_slip: paymentMethod === "tng" ? paymentSlip : null
+      payment_method: finalPaymentMethod,
+      payment_ref: finalPaymentMethod === "tng" ? paymentRef.trim() : "",
+      payment_slip: finalPaymentMethod === "tng" ? paymentSlip : null
     };
 
     try {
@@ -981,11 +983,11 @@ export default function ClientPage() {
             
             <div>
               <span className={`receipt-status-badge ${activeOrder.status === "pending" && activeOrder.payment_method === "cash" ? "awaiting-cash" : activeOrder.status}`}>
-                {activeOrder.status === "pending" && (
-                  activeOrder.payment_method === "cash" 
-                    ? "Awaiting Cash Payment ⚠️" 
-                    : "Preparing Order"
-                )}
+                  {activeOrder.status === "pending" && (
+                    activeOrder.payment_method === "cash" 
+                      ? "Awaiting Cash Payment 💵" 
+                      : activeOrder.payment_method === "tng" ? "Receipt Submitted (Pending Verification)" : "Preparing Order"
+                  )}
                 {activeOrder.status === "preparing" && "Cooking Oden"}
                 {activeOrder.status === "ready" && "Ready for Pickup! 🎉"}
                 {activeOrder.status === "completed" && "Completed / Handed Over"}
@@ -1039,12 +1041,12 @@ export default function ClientPage() {
                 style={{ 
                   textTransform: "uppercase", 
                   fontWeight: 800,
-                  color: activeOrder.payment_method === "cash" && activeOrder.status === "pending" ? "var(--accent-red)" : "var(--color-success)"
+                  color: (activeOrder.payment_method === "cash" || activeOrder.payment_method === "tng") && activeOrder.status === "pending" ? "var(--accent-red)" : "var(--color-success)"
                 }}
               >
-                {activeOrder.payment_method === "tng" 
-                  ? "TnG eWallet (Verified)" 
-                  : (activeOrder.status === "pending" ? "Cash (Awaiting Payment)" : "Cash (Paid & Verified) ✓")}
+                {activeOrder.payment_method === "free" ? "Jackpot Winner (Free Meal 🎉)" : (activeOrder.payment_method === "tng" 
+                  ? (activeOrder.status === "pending" ? "TnG eWallet (Unverified)" : "TnG eWallet (Verified ✅)") 
+                  : (activeOrder.status === "pending" ? "Cash (Awaiting Payment)" : "Cash (Paid & Verified ✅)"))}
               </span>
             </div>
             {activeOrder.payment_method === "tng" && (
@@ -1090,9 +1092,11 @@ export default function ClientPage() {
           ) : activeOrder.status === "preparing" ? (
             <div style={{ background: "rgba(52, 211, 153, 0.08)", border: "1px solid rgba(52, 211, 153, 0.25)", color: "#047857", borderRadius: "8px", padding: "0.75rem", fontSize: "0.85rem", textAlign: "center", fontWeight: 700, marginBottom: "1rem" }}>
               {activeOrder.payment_method === "cash" ? (
-                <span>💵 CASH PAYMENT VERIFIED & PAID: Thank you! We have received your payment of RM {parseFloat(activeOrder.total_price).toFixed(2)} at the APU Atrium counter. Your delicious bowl is cooking now! 🍳</span>
+                <span>✅ CASH PAYMENT VERIFIED & PAID: Thank you! We have received your payment of RM {parseFloat(activeOrder.total_price).toFixed(2)} at the APU Atrium counter. Your delicious bowl is cooking now! 🍲</span>
+              ) : activeOrder.payment_method === "free" ? (
+                <span>🎉 JACKPOT FREE MEAL: Your lucky winning meal is being freshly prepared for you right now! 🍲</span>
               ) : (
-                <span>📲 TNG PAYMENT VERIFIED & CONFIRMED: Thank you! Your Touch 'n Go eWallet payment has been verified. Your delicious bowl is cooking now! 🍳</span>
+                <span>✅ TNG PAYMENT VERIFIED & CONFIRMED: Thank you! Your Touch 'n Go eWallet payment has been verified. Your delicious bowl is cooking now! 🍲</span>
               )}
             </div>
           ) : (
@@ -1460,37 +1464,39 @@ export default function ClientPage() {
                   Select Payment Method
                 </span>
                 
-                <div className="payment-selector-grid">
-                  
-                  {/* Option 1: Cash */}
-                  <div 
-                    className={`payment-selector-card ${paymentMethod === "cash" ? "selected" : ""}`}
-                    onClick={() => setPaymentMethod("cash")}
-                  >
-                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: paymentMethod === "cash" ? "rgba(52, 211, 153, 0.15)" : "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: paymentMethod === "cash" ? "var(--color-success)" : "var(--color-text-dim)" }}>
-                      <DollarSign size={18} style={{ margin: "auto" }} />
+                {/* Payment Selector (Hidden if won the jackpot) */}
+                {!luckyWon && (
+                  <div className="payment-selector-grid">
+                    
+                    {/* Option 1: Cash */}
+                    <div 
+                      className={`payment-selector-card ${paymentMethod === "cash" ? "selected" : ""}`}
+                      onClick={() => setPaymentMethod("cash")}
+                    >
+                      <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: paymentMethod === "cash" ? "rgba(52, 211, 153, 0.15)" : "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: paymentMethod === "cash" ? "var(--color-success)" : "var(--color-text-dim)" }}>
+                        <DollarSign size={18} style={{ margin: "auto" }} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Cash on Pickup</div>
+                        <div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>Pay upon collection</div>
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Cash on Pickup</div>
-                      <div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>Pay upon collection</div>
+
+                    {/* Option 2: TnG */}
+                    <div 
+                      className={`payment-selector-card ${paymentMethod === "tng" ? "selected" : ""}`}
+                      onClick={() => setPaymentMethod("tng")}
+                    >
+                      <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: paymentMethod === "tng" ? "rgba(242, 161, 38, 0.15)" : "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: paymentMethod === "tng" ? "var(--accent-gold)" : "var(--color-text-dim)" }}>
+                        <QrCode size={18} style={{ margin: "auto" }} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>TnG eWallet</div>
+                        <div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>Pay now (Verified)</div>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Option 2: TnG */}
-                  <div 
-                    className={`payment-selector-card ${paymentMethod === "tng" ? "selected" : ""}`}
-                    onClick={() => setPaymentMethod("tng")}
-                  >
-                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: paymentMethod === "tng" ? "rgba(242, 161, 38, 0.15)" : "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", color: paymentMethod === "tng" ? "var(--accent-gold)" : "var(--color-text-dim)" }}>
-                      <QrCode size={18} style={{ margin: "auto" }} />
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Touch 'n Go eWallet</div>
-                      <div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>Scan QR to pay in advance</div>
-                    </div>
-                  </div>
-
-                </div>
+                )}
               </div>
 
               {/* 📲 TnG DuitNow QR Interactive Area */}
