@@ -796,7 +796,7 @@ export default function ClientPage() {
 
   const handleSkewerChange = (name, amount) => {
     setSkewerQty(prev => {
-      const current = prev[name];
+      const current = prev[name] || 0;
       const newVal = Math.max(0, current + amount);
       return { ...prev, [name]: newVal };
     });
@@ -1353,7 +1353,7 @@ export default function ClientPage() {
 
               <div className="skewer-grid">
                 {Object.keys(SKEWER_PRICES).map((key) => {
-                  const qty = skewerQty[key];
+                  const qty = skewerQty[key] || 0;
                   return (
                     <div className="skewer-item" key={key}>
                       <div className="skewer-info">
