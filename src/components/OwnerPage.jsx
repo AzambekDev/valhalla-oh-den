@@ -127,7 +127,7 @@ export default function OwnerPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: "1.5rem" }}>
+      <div className="grid-owner-top">
         
         {/* Passcode Security */}
         <div className="chart-card">
@@ -241,7 +241,7 @@ export default function OwnerPage() {
           <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}><Settings size={18} /> Stall Controls</span>
         </div>
 
-        <div className="settings-group" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginTop: "1rem" }}>
+        <div className="settings-group grid-owner-controls">
           
           {/* Cutoff Time Input */}
           <div className="toggle-switch-wrapper" style={{ flexDirection: "column", alignItems: "stretch", gap: "0.5rem" }}>

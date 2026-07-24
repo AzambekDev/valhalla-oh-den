@@ -3000,3 +3000,9 @@ select.form-input {
     display: inline-block;
     animation: spin 1s linear infinite;
   }
+/* Responsive Dashboards */
+.grid-analytics { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; }
+.grid-owner-top { display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem; }
+.grid-owner-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 1rem; }
+@media (max-width: 900px) { .grid-analytics, .grid-owner-top, .grid-owner-controls { grid-template-columns: 1fr; gap: 1rem; } }
+

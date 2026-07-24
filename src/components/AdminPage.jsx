@@ -259,7 +259,7 @@ export default function AdminPage() {
             </span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "1.5rem" }}>
+          <div className="grid-analytics">
             
             {/* Skewer bars */}
             <div>
