@@ -207,7 +207,7 @@ export default function WorkerPage() {
                           fontWeight: "bold"
                         }}
                       >
-                        <DollarSign size={11} /> Cash (Pay First ⚠️)
+                        <DollarSign size={11} /> Pay at Counter First ⚠️
                       </span>
                     )}
                   </div>
@@ -339,7 +339,7 @@ export default function WorkerPage() {
                       </span>
                     ) : (
                       <span className="order-card-soup" style={{ background: "rgba(52, 211, 153, 0.12)", color: "var(--color-success)", display: "inline-flex", alignItems: "center", gap: "0.15rem" }}>
-                        <DollarSign size={11} /> Cash
+                        <DollarSign size={11} /> Paid at Counter
                       </span>
                     )}
                   </div>
@@ -461,7 +461,7 @@ export default function WorkerPage() {
                       </span>
                     ) : (
                       <span className="order-card-soup" style={{ background: "rgba(52, 211, 153, 0.12)", color: "var(--color-success)", display: "inline-flex", alignItems: "center", gap: "0.15rem" }}>
-                        <DollarSign size={11} /> Cash
+                        <DollarSign size={11} /> Paid at Counter
                       </span>
                     )}
                   </div>
@@ -582,7 +582,7 @@ export default function WorkerPage() {
                       </span>
                     ) : (
                       <span className="order-card-soup" style={{ background: "rgba(255, 255, 255, 0.05)", color: "var(--color-text-muted)", display: "inline-flex", alignItems: "center", gap: "0.15rem" }}>
-                        <DollarSign size={11} /> Cash
+                        <DollarSign size={11} /> Paid at Counter
                       </span>
                     )}
                   </div>

@@ -1046,7 +1046,7 @@ export default function ClientPage() {
               >
                 {activeOrder.payment_method === "free" ? "Jackpot Winner (Free Meal 🎉)" : (activeOrder.payment_method === "tng" 
                   ? (activeOrder.status === "pending" ? "TnG eWallet (Unverified)" : "TnG eWallet (Verified ✅)") 
-                  : (activeOrder.status === "pending" ? "Cash (Awaiting Payment)" : "Cash (Paid & Verified ✅)"))}
+                  : (activeOrder.status === "pending" ? "Pay at Counter (Awaiting Payment)" : "Paid at Counter (Verified ✅)"))}
               </span>
             </div>
             {activeOrder.payment_method === "tng" && (
@@ -1477,8 +1477,8 @@ export default function ClientPage() {
                         <DollarSign size={18} style={{ margin: "auto" }} />
                       </div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Cash on Pickup</div>
-                        <div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>Pay upon collection</div>
+                        <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Pay at Counter First</div>
+                        <div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>Pay at stall to start cooking</div>
                       </div>
                     </div>
 

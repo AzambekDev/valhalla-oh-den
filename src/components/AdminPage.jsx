@@ -745,7 +745,7 @@ export default function AdminPage() {
                           </div>
                         ) : (
                           <span className="table-status pending" style={{ fontSize: "0.7rem", background: "rgba(52,211,153,0.15)", color: "var(--color-success)", fontWeight: 800 }}>
-                            💵 Cash
+                            💵 Cash (Counter)
                           </span>
                         )}
                       </td>
