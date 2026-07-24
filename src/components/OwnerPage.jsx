@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Key, QrCode } from 'lucide-react';
-import { setPasscode, clearOrders } from '../utils/db';
-
+import React, { useState, useEffect } from 'react';
+import { Key, QrCode, Settings, Clock } from 'lucide-react';
+import { setPasscode, clearOrders, syncStallSettings } from '../utils/db';
+import { getCutoffTime } from '../utils/time';
 export default function OwnerPage() {
   const [newAdminPass, setNewAdminPass] = useState("");
   const [newWorkerPass, setNewWorkerPass] = useState("");
@@ -12,6 +12,48 @@ export default function OwnerPage() {
   
   const [purgeInput, setPurgeInput] = useState("");
   const [isPurging, setIsPurging] = useState(false);
+
+  // Stall Controls
+  const [cutoffVal, setCutoffVal] = useState("16:00");
+  const [forceStatus, setForceStatus] = useState("auto"); // 'auto', 'open', 'closed'
+  const [luckyProb, setLuckyProb] = useState("0.001");
+
+  // Sync owner state
+  useEffect(() => {
+    setCutoffVal(getCutoffTime());
+    setForceStatus(localStorage.getItem("oden_force_status") || "auto");
+    setLuckyProb(localStorage.getItem("oden_lucky_prob") || "0.001");
+
+    const handleStorageChange = async () => {
+      setCutoffVal(getCutoffTime());
+      setForceStatus(localStorage.getItem("oden_force_status") || "auto");
+      setLuckyProb(localStorage.getItem("oden_lucky_prob") || "0.001");
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("oden_db_update", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("oden_db_update", handleStorageChange);
+    };
+  }, []);
+
+  const handleCutoffChange = async (e) => {
+    const newVal = e.target.value;
+    setCutoffVal(newVal);
+    await syncStallSettings(undefined, newVal, undefined);
+  };
+
+  const handleForceStatus = async (status) => {
+    setForceStatus(status);
+    await syncStallSettings(status, undefined, undefined);
+  };
+
+  const handleLuckyProbChange = async (e) => {
+    const newVal = e.target.value;
+    setLuckyProb(newVal);
+    await syncStallSettings(undefined, undefined, newVal);
+  };
 
   const handleUpdatePasscodes = async (e) => {
     e.preventDefault();
@@ -191,6 +233,97 @@ export default function OwnerPage() {
           </form>
         </div>
 
+      </div>
+
+      {/* Configuration Card */}
+      <div className="chart-card">
+        <div className="chart-card-title">
+          <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}><Settings size={18} /> Stall Controls</span>
+        </div>
+
+        <div className="settings-group" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginTop: "1rem" }}>
+          
+          {/* Cutoff Time Input */}
+          <div className="toggle-switch-wrapper" style={{ flexDirection: "column", alignItems: "stretch", gap: "0.5rem" }}>
+            <div className="toggle-info">
+              <span className="toggle-label" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                <Clock size={14} style={{ color: "var(--accent-gold)" }} /> Cutoff Time Limit
+              </span>
+              <span className="toggle-desc">Lock customer pre-ordering instantly at this clock time.</span>
+            </div>
+            <input 
+              type="time" 
+              className="form-input"
+              value={cutoffVal}
+              onChange={handleCutoffChange}
+              style={{ width: "100%", padding: "0.5rem" }}
+            />
+          </div>
+
+          {/* Force Override status */}
+          <div className="toggle-switch-wrapper" style={{ flexDirection: "column", alignItems: "stretch", gap: "0.5rem" }}>
+            <div className="toggle-info">
+              <span className="toggle-label">Stall Ordering State</span>
+              <span className="toggle-desc">Force system to ignore clock limits. Good for selling out early!</span>
+            </div>
+            <div className="force-group">
+              <button 
+                type="button"
+                className={`force-btn auto ${forceStatus === "auto" ? "active" : ""}`}
+                onClick={() => handleForceStatus("auto")}
+              >
+                Auto
+              </button>
+              <button 
+                type="button"
+                className={`force-btn open ${forceStatus === "open" ? "active" : ""}`}
+                onClick={() => handleForceStatus("open")}
+              >
+                Force Open
+              </button>
+              <button 
+                type="button"
+                className={`force-btn closed ${forceStatus === "closed" ? "active" : ""}`}
+                onClick={() => handleForceStatus("closed")}
+              >
+                Force Close
+              </button>
+            </div>
+          </div>
+
+          {/* Lucky Dice Probability */}
+          <div className="toggle-switch-wrapper" style={{ flexDirection: "column", alignItems: "stretch", gap: "0.5rem" }}>
+            <div className="toggle-info">
+              <span className="toggle-label" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                🎲 Lucky Dice Win Chance (%)
+              </span>
+              <span className="toggle-desc">Set the probability for a free order. Currently: {(parseFloat(luckyProb)*100).toFixed(3)}%</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <input 
+                type="number" 
+                min="0" 
+                max="100" 
+                step="0.001"
+                value={luckyProb * 100}
+                onChange={async (e) => {
+                  let val = parseFloat(e.target.value);
+                  if (isNaN(val)) val = 0;
+                  const rawVal = (val / 100).toString();
+                  setLuckyProb(rawVal);
+                  await syncStallSettings(undefined, undefined, rawVal);
+                }}
+                className="form-input"
+                style={{ flex: 1, padding: "0.5rem" }}
+                placeholder="e.g. 0.1 for 0.1%"
+              />
+              <span style={{ fontWeight: 800, color: "var(--accent-gold)", minWidth: "20px", textAlign: "right" }}>
+                %
+              </span>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       {/* ⚠️ DANGER ZONE: CLOUD DATABASE PURGE GATE */}
