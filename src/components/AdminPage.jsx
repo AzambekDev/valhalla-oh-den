@@ -315,10 +315,7 @@ export default function AdminPage() {
 
           </div>
         </div>
-
-
-
-
+      </div>
 
       {/* 5. ORDERS DATABASE LEDGER TABLE */}
       <div className="table-card">
