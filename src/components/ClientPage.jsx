@@ -884,7 +884,11 @@ export default function ClientPage() {
       total_price: calculateTotal(),
       pickup_time: pickupTime,
       payment_method: finalPaymentMethod,
-      payment_ref: finalPaymentMethod === "tng" ? paymentRef.trim() : "",
+      payment_ref: finalPaymentMethod === "tng" 
+        ? paymentRef.trim() 
+        : finalPaymentMethod === "cash" 
+          ? Math.random().toString(36).substring(2, 6).toUpperCase()
+          : "",
       payment_slip: finalPaymentMethod === "tng" ? paymentSlip : null
     };
 
@@ -1053,6 +1057,17 @@ export default function ClientPage() {
               <div className="receipt-meta-row">
                 <span className="receipt-meta-label">Ref ID:</span>
                 <span className="receipt-meta-val" style={{ fontFamily: "monospace", fontSize: "0.8rem", wordBreak: "break-all", textAlign: "right", marginLeft: "1rem" }}>{activeOrder.payment_ref}</span>
+              </div>
+            )}
+            {activeOrder.payment_method === "cash" && activeOrder.status === "pending" && (
+              <div style={{ marginTop: "0.75rem", background: "rgba(239, 68, 68, 0.05)", padding: "0.75rem", borderRadius: "8px", border: "1px dashed var(--accent-red)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
+                <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--accent-red)" }}>CASH VERIFICATION PIN</span>
+                <span style={{ fontSize: "1.75rem", fontWeight: 900, fontFamily: "monospace", letterSpacing: "5px", color: "var(--bg-main)", background: "var(--accent-red)", padding: "0.25rem 1rem", borderRadius: "6px", display: "inline-block" }}>
+                  {activeOrder.payment_ref}
+                </span>
+                <span style={{ fontSize: "0.7rem", color: "var(--color-text-muted)", textAlign: "center", marginTop: "0.25rem", lineHeight: "1.3" }}>
+                  Show this PIN to the cashier when paying at the counter to verify your order.
+                </span>
               </div>
             )}
           </div>

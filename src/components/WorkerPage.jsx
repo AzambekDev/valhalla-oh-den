@@ -229,10 +229,24 @@ export default function WorkerPage() {
                     {order.payment_method === "cash" ? (
                       <button 
                         className="order-action-btn btn-cook"
-                        onClick={() => handleStatusChange(order.id, "preparing")}
+                        onClick={() => {
+                          if (!order.payment_ref) {
+                            // Legacy order handling without PIN
+                            handleStatusChange(order.id, "preparing");
+                            return;
+                          }
+                          const pin = window.prompt(`🔒 CASH PAYMENT VERIFICATION\n\nPlease enter the 4-digit PIN shown on the customer's receipt to verify they have paid at the counter:`);
+                          if (pin !== null) {
+                            if (pin.trim().toUpperCase() === order.payment_ref.toUpperCase()) {
+                              handleStatusChange(order.id, "preparing");
+                            } else {
+                              alert("❌ INCORRECT PIN: Verification failed. Please check the PIN on the customer's device.");
+                            }
+                          }
+                        }}
                         style={{ background: "var(--color-success)", color: "white", flex: 1, fontWeight: "bold" }}
                       >
-                        💵 Confirm Pay & Cook
+                        🔒 Verify PIN & Cook
                       </button>
                     ) : (
                       <button 
