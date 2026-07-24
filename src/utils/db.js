@@ -44,6 +44,7 @@ export function resetSupabaseClient() {
 // valhallaohden123 -> eed8bf1b966368d93cab3a86d613675102dcf4044e54f66c32e90b14b02f28dc
 const DEFAULT_ADMIN_HASH = "eed8bf1b966368d93cab3a86d613675102dcf4044e54f66c32e90b14b02f28dc";
 const DEFAULT_WORKER_HASH = "eed8bf1b966368d93cab3a86d613675102dcf4044e54f66c32e90b14b02f28dc";
+const DEFAULT_OWNER_HASH = "43a0d17178a9d26c9e0fe9a74b0b45e38d32f27aed887a008a54bf6e033bf7b9"; // owner123
 
 const OLD_ADMIN_HASHES = [
   "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9", // admin123
@@ -63,6 +64,11 @@ if (!currentAdminHash || OLD_ADMIN_HASHES.includes(currentAdminHash)) {
 const currentWorkerHash = localStorage.getItem("oden_worker_passcode_hash");
 if (!currentWorkerHash || OLD_WORKER_HASHES.includes(currentWorkerHash)) {
   localStorage.setItem("oden_worker_passcode_hash", DEFAULT_WORKER_HASH);
+}
+
+const currentOwnerHash = localStorage.getItem("oden_owner_passcode_hash");
+if (!currentOwnerHash) {
+  localStorage.setItem("oden_owner_passcode_hash", DEFAULT_OWNER_HASH);
 }
 
 // Setup DuitNow Payment QR defaults and upgrade old values automatically
@@ -88,7 +94,9 @@ if (!localStorage.getItem("oden_orders")) {
  * Verifies a plaintext passcode against the stored SHA-256 hash.
  */
 export async function verifyPasscode(role, plaintext) {
-  const hashKey = role === "admin" ? "oden_admin_passcode_hash" : "oden_worker_passcode_hash";
+  const hashKey = role === "owner" ? "oden_owner_passcode_hash" 
+                : role === "admin" ? "oden_admin_passcode_hash" 
+                : "oden_worker_passcode_hash";
   const storedHash = localStorage.getItem(hashKey);
   const inputHash = await sha256(plaintext);
   return storedHash === inputHash;
@@ -98,7 +106,9 @@ export async function verifyPasscode(role, plaintext) {
  * Hashes and updates a role's passcode.
  */
 export async function setPasscode(role, plaintext) {
-  const hashKey = role === "admin" ? "oden_admin_passcode_hash" : "oden_worker_passcode_hash";
+  const hashKey = role === "owner" ? "oden_owner_passcode_hash" 
+                : role === "admin" ? "oden_admin_passcode_hash" 
+                : "oden_worker_passcode_hash";
   const hashedVal = await sha256(plaintext);
   localStorage.setItem(hashKey, hashedVal);
   window.dispatchEvent(new Event("storage"));

@@ -14,6 +14,7 @@ import {
 import ClientPage from "./components/ClientPage";
 import WorkerPage from "./components/WorkerPage";
 import AdminPage from "./components/AdminPage";
+import OwnerPage from "./components/OwnerPage";
 import { getCurrentTime } from "./utils/time";
 import { isSupabaseConnected, verifyPasscode, subscribeOrders } from "./utils/db";
 
@@ -96,6 +97,7 @@ export default function App() {
   const [passcodeError, setPasscodeError] = useState("");
   const [isWorkerUnlocked, setIsWorkerUnlocked] = useState(false);
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+  const [isOwnerUnlocked, setIsOwnerUnlocked] = useState(false);
 
   useEffect(() => {
     // Tick the header clock dynamically
@@ -110,6 +112,7 @@ export default function App() {
     // Check sessionStorage to see if already unlocked in this active tab session
     setIsWorkerUnlocked(sessionStorage.getItem("oden_worker_auth") === "true");
     setIsAdminUnlocked(sessionStorage.getItem("oden_admin_auth") === "true");
+    setIsOwnerUnlocked(sessionStorage.getItem("oden_owner_auth") === "true");
 
     const handleStorageChange = () => {
       setSupabaseActive(isSupabaseConnected());
@@ -140,7 +143,7 @@ export default function App() {
       return;
     }
 
-    const role = activeTab === "worker" ? "worker" : "admin";
+    const role = activeTab === "worker" ? "worker" : activeTab === "owner" ? "owner" : "admin";
     
     try {
       const isValid = await verifyPasscode(role, passcodeInput.trim());
@@ -148,6 +151,9 @@ export default function App() {
         if (role === "worker") {
           sessionStorage.setItem("oden_worker_auth", "true");
           setIsWorkerUnlocked(true);
+        } else if (role === "owner") {
+          sessionStorage.setItem("oden_owner_auth", "true");
+          setIsOwnerUnlocked(true);
         } else {
           sessionStorage.setItem("oden_admin_auth", "true");
           setIsAdminUnlocked(true);
@@ -166,6 +172,9 @@ export default function App() {
     if (role === "worker") {
       sessionStorage.removeItem("oden_worker_auth");
       setIsWorkerUnlocked(false);
+    } else if (role === "owner") {
+      sessionStorage.removeItem("oden_owner_auth");
+      setIsOwnerUnlocked(false);
     } else {
       sessionStorage.removeItem("oden_admin_auth");
       setIsAdminUnlocked(false);
@@ -187,8 +196,8 @@ export default function App() {
     }
   };
 
-  const currentRoleName = activeTab === "worker" ? "Prep Kitchen" : "Manager Dashboard";
-  const isCurrentlyLocked = (activeTab === "worker" && !isWorkerUnlocked) || (activeTab === "admin" && !isAdminUnlocked);
+  const currentRoleName = activeTab === "worker" ? "Prep Kitchen" : activeTab === "owner" ? "Owner Dashboard" : "Manager Dashboard";
+  const isCurrentlyLocked = (activeTab === "worker" && !isWorkerUnlocked) || (activeTab === "admin" && !isAdminUnlocked) || (activeTab === "owner" && !isOwnerUnlocked);
 
   return (
     <div className="app-container">
@@ -239,6 +248,14 @@ export default function App() {
                 {isAdminUnlocked ? <Unlock size={14} style={{ color: "var(--color-success)" }} /> : <Lock size={14} />}
                 Manager Settings
               </button>
+              
+              <button 
+                className={`nav-tab-btn ${activeTab === "owner" ? "active" : ""}`}
+                onClick={() => setActiveTab("owner")}
+              >
+                {isOwnerUnlocked ? <Unlock size={14} style={{ color: "var(--color-success)" }} /> : <Lock size={14} />}
+                Owner Settings
+              </button>
             </>
           )}
         </nav>
@@ -263,6 +280,16 @@ export default function App() {
               onClick={() => handleLogout("admin")}
               style={{ padding: "0.4rem 0.75rem", fontSize: "0.75rem", color: "var(--accent-red)", borderColor: "rgba(239, 68, 68, 0.25)" }}
               title="Lock manager settings"
+            >
+              <Lock size={12} /> Lock settings
+            </button>
+          )}
+          {activeTab === "owner" && isOwnerUnlocked && (
+            <button 
+              className="btn btn-secondary animate-pulse" 
+              onClick={() => handleLogout("owner")}
+              style={{ padding: "0.4rem 0.75rem", fontSize: "0.75rem", color: "var(--accent-red)", borderColor: "rgba(239, 68, 68, 0.25)" }}
+              title="Lock owner settings"
             >
               <Lock size={12} /> Lock settings
             </button>
@@ -343,6 +370,7 @@ export default function App() {
             {activeTab === "client" && <ClientPage />}
             {activeTab === "worker" && <WorkerPage />}
             {activeTab === "admin" && <AdminPage />}
+            {activeTab === "owner" && <OwnerPage />}
           </ErrorBoundary>
         )}
 
