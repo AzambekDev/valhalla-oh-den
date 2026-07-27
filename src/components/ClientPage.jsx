@@ -26,7 +26,7 @@ import {
   getCutoffTime,
   format12Hour
 } from "../utils/time";
-import { addOrder, subscribeOrders } from "../utils/db";
+import { addOrder, subscribeOrders, getOrders } from "../utils/db";
 
 // Custom Menu Pricing (All skewers set to RM 3.00)
 const SKEWER_PRICES = {
@@ -131,7 +131,13 @@ function playCustomerChime() {
     // 1. Play the loud HTML5 audio buzzer (bypasses iPhone Silent Switch completely!)
     initBuzzerAudio();
     if (iosBuzzerAudio) {
-      iosBuzzerAudio.currentTime = 0;
+      try {
+        if (iosBuzzerAudio.readyState > 0) {
+          iosBuzzerAudio.currentTime = 0;
+        }
+      } catch (err) {
+        console.warn("Buzzer reset currentTime failed:", err);
+      }
       const playPromise = iosBuzzerAudio.play();
       if (playPromise !== undefined) {
         playPromise.catch(e => {
@@ -712,9 +718,43 @@ export default function ClientPage() {
     if (!activeReceiptId) {
       setActiveOrder(null);
       prevStatusRef.current = null;
-      prevPingCountRef.current = 0;
+      prevPingCountRef.current = null;
       return;
     }
+
+    const loadFreshOrder = async () => {
+      try {
+        const orders = await getOrders();
+        const ordersArray = Array.isArray(orders) ? orders : [];
+        const match = ordersArray.find(o => o && o.id === activeReceiptId);
+        if (match) {
+          if (prevPingCountRef.current === null) {
+            prevPingCountRef.current = match.ping_count || 0;
+          }
+
+          const isStatusTransition = prevStatusRef.current !== null && prevStatusRef.current !== "ready" && match.status === "ready";
+          const isPingTriggered = prevPingCountRef.current !== null && match.ping_count > prevPingCountRef.current && match.status === "ready";
+
+          if (isStatusTransition || isPingTriggered) {
+            startHeavyAlarm(match.id, match.customer_name);
+          }
+
+          if (match.status !== "ready") {
+            stopHeavyAlarm();
+          }
+
+          prevStatusRef.current = match.status;
+          prevPingCountRef.current = match.ping_count || 0;
+          localStorage.setItem("valhalla_active_order", JSON.stringify(match));
+          setActiveOrder(match);
+        }
+      } catch (err) {
+        console.error("loadFreshOrder error:", err);
+      }
+    };
+
+    // Load immediately
+    loadFreshOrder();
 
     const unsubscribe = subscribeOrders((orders) => {
       const ordersArray = Array.isArray(orders) ? orders : [];
@@ -743,7 +783,13 @@ export default function ClientPage() {
       }
     });
 
-    return () => unsubscribe();
+    // Fallback polling to ensure stats and pings update even if socket connections throttle or disconnect
+    const clientPollInterval = setInterval(loadFreshOrder, 3000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(clientPollInterval);
+    };
   }, [activeReceiptId]);
 
   // Handle image upload and compress to Base64 Data URL
@@ -1736,7 +1782,7 @@ export default function ClientPage() {
                   <div className="cart-item" key={key}>
                     <span className="cart-item-name">{key}</span>
                     <span className="cart-item-qty">
-                      {skewerQty[key]} x ${SKEWER_PRICES[key].toFixed(2)}
+                      {skewerQty[key]} x ${(SKEWER_PRICES[key] !== undefined ? SKEWER_PRICES[key] : 3.00).toFixed(2)}
                     </span>
                   </div>
                 );
