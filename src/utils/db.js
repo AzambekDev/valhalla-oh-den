@@ -82,6 +82,12 @@ if (!localStorage.getItem("oden_orders")) {
   localStorage.setItem("oden_orders", JSON.stringify([]));
 }
 
+// Automatically upgrade legacy cutoff default (16:00 -> 17:00)
+const currentCutoff = localStorage.getItem("oden_cutoff_time");
+if (!currentCutoff || currentCutoff === "16:00") {
+  localStorage.setItem("oden_cutoff_time", "17:00");
+}
+
 /**
  * Verifies a plaintext passcode against the stored SHA-256 hash.
  */
@@ -269,11 +275,11 @@ export function subscribeOrders(callback) {
     const settingsOrder = ordersList.find(o => o && o.id === "STALL_SETTINGS");
     if (settingsOrder && settingsOrder.items) {
       const cloudForce = settingsOrder.items.force_status || "auto";
-      const cloudCutoff = settingsOrder.items.cutoff_time || "16:00";
+      const cloudCutoff = settingsOrder.items.cutoff_time || "17:00";
       const cloudProb = settingsOrder.items.lucky_prob || "0.001";
       
       const localForce = localStorage.getItem("oden_force_status") || "auto";
-      const localCutoff = localStorage.getItem("oden_cutoff_time") || "16:00";
+      const localCutoff = localStorage.getItem("oden_cutoff_time") || "17:00";
       const localProb = localStorage.getItem("oden_lucky_prob") || "0.001";
       
       if (cloudForce !== localForce || cloudCutoff !== localCutoff || cloudProb !== localProb) {
@@ -402,7 +408,7 @@ export async function ensureStallSettings() {
           soup_base: "System",
           items: {
             force_status: localStorage.getItem("oden_force_status") || "auto",
-            cutoff_time: localStorage.getItem("oden_cutoff_time") || "16:00",
+            cutoff_time: localStorage.getItem("oden_cutoff_time") || "17:00",
             lucky_prob: localStorage.getItem("oden_lucky_prob") || "0.001"
           },
           total_price: 0,
@@ -430,7 +436,7 @@ export async function ensureStallSettings() {
         soup_base: "System",
         items: {
           force_status: localStorage.getItem("oden_force_status") || "auto",
-          cutoff_time: localStorage.getItem("oden_cutoff_time") || "16:00",
+          cutoff_time: localStorage.getItem("oden_cutoff_time") || "17:00",
           lucky_prob: localStorage.getItem("oden_lucky_prob") || "0.001"
         },
         total_price: 0,
@@ -455,7 +461,7 @@ export async function ensureStallSettings() {
  */
 export async function syncStallSettings(forceStatus, cutoffTime, luckyProb) {
   const currentForce = forceStatus !== undefined ? forceStatus : (localStorage.getItem("oden_force_status") || "auto");
-  const currentCutoff = cutoffTime !== undefined ? cutoffTime : (localStorage.getItem("oden_cutoff_time") || "16:00");
+  const currentCutoff = cutoffTime !== undefined ? cutoffTime : (localStorage.getItem("oden_cutoff_time") || "17:00");
   const currentProb = luckyProb !== undefined ? luckyProb : (localStorage.getItem("oden_lucky_prob") || "0.001");
   
   // Save locally immediately for snappy responsiveness
@@ -661,7 +667,7 @@ export async function resetMockOrders() {
       soup_base: "System",
       items: {
         force_status: localStorage.getItem("oden_force_status") || "auto",
-        cutoff_time: localStorage.getItem("oden_cutoff_time") || "16:00"
+        cutoff_time: localStorage.getItem("oden_cutoff_time") || "17:00"
       },
       total_price: 0,
       pickup_time: "System",

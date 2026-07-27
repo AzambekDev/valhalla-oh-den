@@ -329,7 +329,8 @@ const PICKUP_SLOTS = [
   { value: "12:30 PM", label: "12:30 PM" },
   { value: "1:30 PM", label: "1:30 PM" },
   { value: "2:30 PM", label: "2:30 PM" },
-  { value: "3:45 PM", label: "3:45 PM (Last Batch)" }
+  { value: "3:45 PM", label: "3:45 PM" },
+  { value: "4:45 PM", label: "4:45 PM (Last Batch)" }
 ];
 
 function isSlotInPast(slotValue, now) {

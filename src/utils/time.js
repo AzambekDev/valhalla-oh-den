@@ -3,8 +3,8 @@
  * Supports standard operations and simulated time travel.
  */
 
-// Cutoff default is 4:00 PM (16:00)
-const DEFAULT_CUTOFF = "16:00";
+// Cutoff default is 5:00 PM (17:00)
+const DEFAULT_CUTOFF = "17:00";
 
 /**
  * Gets the current simulated or actual date object.
@@ -93,7 +93,7 @@ export function getOrderingStatus() {
 
   const now = getCurrentTime();
   
-  // Cutoff time parser (default 16:00 / 4:00 PM)
+  // Cutoff time parser (default 17:00 / 5:00 PM)
   const cutoff = getCutoffTime();
   const [cutoffHours, cutoffMinutes] = cutoff.split(":").map(Number);
   
@@ -109,7 +109,7 @@ export function getOrderingStatus() {
     return { isOpen: false, reason: "Sorry, we are closed!" };
   }
 
-  // Closed if past Cutoff (default 4:00 PM / 16:00)
+  // Closed if past Cutoff (default 5:00 PM / 17:00)
   if (currentHour > cutoffHours || (currentHour === cutoffHours && currentMinute >= cutoffMinutes)) {
     return { isOpen: false, reason: "Sorry, we are closed!" };
   }

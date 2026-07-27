@@ -31,7 +31,7 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 25;
-  const [cutoffVal, setCutoffVal] = useState("16:00");
+  const [cutoffVal, setCutoffVal] = useState("17:00");
   const [forceStatus, setForceStatus] = useState("auto"); // 'auto', 'open', 'closed'
   // DuitNow TnG configurations
   const [tngNumber, setTngNumber] = useState("+601164188797");

@@ -14,7 +14,7 @@ export default function OwnerPage() {
   const [isPurging, setIsPurging] = useState(false);
 
   // Stall Controls
-  const [cutoffVal, setCutoffVal] = useState("16:00");
+  const [cutoffVal, setCutoffVal] = useState("17:00");
   const [forceStatus, setForceStatus] = useState("auto"); // 'auto', 'open', 'closed'
   const [luckyProb, setLuckyProb] = useState("0.001");
 
