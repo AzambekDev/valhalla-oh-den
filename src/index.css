@@ -1566,6 +1566,22 @@ select.form-input {
   background: rgba(239, 68, 68, 0.1);
 }
 
+.table-action-edit {
+  background: transparent;
+  color: var(--color-text-dim);
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  margin-right: 0.4rem;
+}
+
+.table-action-edit:hover {
+  color: var(--accent-gold);
+  background: rgba(242, 161, 38, 0.1);
+}
+
 /* Simulated Dev Panel (Floating Quick-Switch Control Bar) */
 .dev-panel-toggle {
   position: fixed;

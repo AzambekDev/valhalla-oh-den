@@ -198,6 +198,30 @@ export async function updateOrderStatus(orderId, status) {
   return updatedOrders.find(o => o.id === orderId);
 }
 
+export async function updateOrderPrice(orderId, totalPrice) {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .update({ total_price: totalPrice })
+        .eq("id", orderId)
+        .select();
+      if (error) throw error;
+      return data[0];
+    } catch (e) {
+      console.error("Supabase updateOrderPrice error, falling back to local:", e);
+    }
+  }
+
+  const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+  const updatedOrders = orders.map(o => o.id === orderId ? { ...o, total_price: totalPrice } : o);
+  localStorage.setItem("oden_orders", JSON.stringify(updatedOrders));
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new Event("oden_db_update"));
+  return updatedOrders.find(o => o.id === orderId);
+}
+
 export async function deleteOrder(orderId) {
   const supabase = getSupabaseClient();
   if (supabase) {

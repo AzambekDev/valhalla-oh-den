@@ -12,7 +12,8 @@ import {
   RefreshCw,
   Clock,
   Key,
-  QrCode
+  QrCode,
+  Edit2
 } from "lucide-react";
 import { 
   getOrders, 
@@ -22,7 +23,8 @@ import {
   resetSupabaseClient,
   setPasscode,
   clearOrders,
-  syncStallSettings
+  syncStallSettings,
+  updateOrderPrice
 } from "../utils/db";
 import { getCutoffTime } from "../utils/time";
 
@@ -188,6 +190,32 @@ export default function AdminPage() {
       const updated = orders.filter(o => o.id !== orderId);
       setOrders(updated);
       calculateKPIs(updated);
+    }
+  };
+
+  const handleEditPrice = async (order) => {
+    const currentPrice = parseFloat(order.total_price).toFixed(2);
+    const newPriceInput = window.prompt(
+      `✏️ EDIT ORDER PRICE - Order #${order.id}\nCustomer: ${order.customer_name}\n\nCurrent Price: RM ${currentPrice}\n\nEnter the new price (RM):`,
+      currentPrice
+    );
+    
+    if (newPriceInput !== null) {
+      const parsedPrice = parseFloat(newPriceInput);
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        alert("❌ INVALID PRICE: Please enter a valid positive number.");
+        return;
+      }
+      
+      try {
+        await updateOrderPrice(order.id, parsedPrice);
+        const allOrders = await getOrders();
+        setOrders(allOrders);
+        calculateKPIs(allOrders);
+      } catch (err) {
+        console.error("Failed to update order price:", err);
+        alert("Failed to update order price.");
+      }
     }
   };
 
@@ -711,6 +739,15 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td style={{ textAlign: "right" }}>
+                        {order.status === "completed" && (
+                          <button 
+                            className="table-action-edit"
+                            onClick={() => handleEditPrice(order)}
+                            title="Edit amount paid for this completed order"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                        )}
                         <button 
                           className="table-action-del"
                           onClick={() => handleDelete(order.id)}
