@@ -323,40 +323,6 @@ function unlockAudio() {
   }
 }
 
-const PICKUP_SLOTS = [
-  { value: "10:15 AM", label: "10:15 AM (First Batch)" },
-  { value: "11:30 AM", label: "11:30 AM" },
-  { value: "12:30 PM", label: "12:30 PM" },
-  { value: "1:30 PM", label: "1:30 PM" },
-  { value: "2:30 PM", label: "2:30 PM" },
-  { value: "3:45 PM", label: "3:45 PM" },
-  { value: "4:45 PM", label: "4:45 PM (Last Batch)" }
-];
-
-function isSlotInPast(slotValue, now) {
-  const match = slotValue.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
-  if (!match) return false;
-  
-  let slotHours = parseInt(match[1], 10);
-  const slotMinutes = parseInt(match[2], 10);
-  const ampm = match[3].toUpperCase();
-  
-  if (ampm === "PM" && slotHours !== 12) {
-    slotHours += 12;
-  } else if (ampm === "AM" && slotHours === 12) {
-    slotHours = 0;
-  }
-  
-  const currentHours = now.getHours();
-  const currentMinutes = now.getMinutes();
-  
-  if (currentHours > slotHours) {
-    return true;
-  } else if (currentHours === slotHours) {
-    return currentMinutes >= slotMinutes;
-  }
-  return false;
-}
 
 export default function ClientPage() {
   const prevStatusRef = useRef(null);
@@ -554,7 +520,7 @@ export default function ClientPage() {
   });
   const [custName, setCustName] = useState("");
   const [custPhone, setCustPhone] = useState("");
-  const [pickupTime, setPickupTime] = useState("");
+  const [pickupTime, setPickupTime] = useState("ASAP");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 🎲 "I'm Feeling Lucky" Game States
@@ -704,15 +670,6 @@ export default function ClientPage() {
     localStorage.setItem("valhalla_cached_skewers", JSON.stringify(skewerQty));
   }, [skewerQty]);
 
-  // Reset pickupTime if the selected slot becomes in the past
-  useEffect(() => {
-    if (pickupTime) {
-      const now = getCurrentTime();
-      if (isSlotInPast(pickupTime, now)) {
-        setPickupTime("");
-      }
-    }
-  }, [timeLeft, pickupTime]);
 
   // Subscribe to updates for the active order to show real-time status changes
   useEffect(() => {
@@ -941,7 +898,7 @@ export default function ClientPage() {
     }
 
     if (!custName.trim() || !custPhone.trim() || !pickupTime) {
-      alert("Please fill in all details and pick a pickup slot!");
+      alert("Please fill in all details!");
       return;
     }
 
@@ -1021,7 +978,7 @@ export default function ClientPage() {
       });
       setCustName("");
       setCustPhone("");
-      setPickupTime("");
+      setPickupTime("ASAP");
       setPaymentMethod("cash");
       setPaymentRef("");
       setPaymentSlip(null);
@@ -1535,24 +1492,7 @@ export default function ClientPage() {
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">
-                      <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><Clock size={14} /> Select Atrium Pickup Slot</span>
-                    </label>
-                    <select 
-                      className="form-input"
-                      value={pickupTime}
-                      onChange={(e) => setPickupTime(e.target.value)}
-                      required
-                    >
-                      <option value="">-- Choose a pickup slot at Atrium --</option>
-                      {PICKUP_SLOTS.filter(slot => !isSlotInPast(slot.value, getCurrentTime())).map(slot => (
-                        <option key={slot.value} value={slot.value}>
-                          {slot.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+
                 </div>
               </div>
 

@@ -562,7 +562,6 @@ const MOCK_ITEMS = [
   "Lobster-flavoured balls", "Stuffed squid rolls", "Golden seafood rolls", "Scallop-style seafood tofu", "Fishball"
 ];
 const MOCK_STATUSES = ["pending", "preparing", "ready", "completed"];
-const MOCK_SLOTS = ["11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM"];
 const MOCK_PAYMENTS = ["cash", "tng"];
 
 function generateSingleMockOrder(idNum, forceStatus) {
@@ -583,7 +582,7 @@ function generateSingleMockOrder(idNum, forceStatus) {
   }
   
   const totalPrice = totalQty * 3.00;
-  const slot = MOCK_SLOTS[Math.floor(Math.random() * MOCK_SLOTS.length)];
+  const slot = "ASAP";
   const status = forceStatus || MOCK_STATUSES[Math.floor(Math.random() * MOCK_STATUSES.length)];
   const payment = MOCK_PAYMENTS[Math.floor(Math.random() * MOCK_PAYMENTS.length)];
   const paymentRef = payment === "tng" ? `TNG${Math.floor(10000000 + Math.random() * 90000000)}` : "";
