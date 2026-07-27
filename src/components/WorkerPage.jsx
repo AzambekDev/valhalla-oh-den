@@ -11,7 +11,7 @@ import {
   QrCode,
   X 
 } from "lucide-react";
-import { subscribeOrders, updateOrderStatus, pingCustomer } from "../utils/db";
+import { subscribeOrders, updateOrderStatus, pingCustomer, deleteOrder } from "../utils/db";
 
 // Browser Synthetic "Ding-Dong" bell to avoid external asset dependency
 function playKitchenChime() {
@@ -102,6 +102,18 @@ export default function WorkerPage() {
     } catch (e) {
       console.error(e);
       alert("Failed to trigger remote customer reminder ping. Please verify your Supabase database has the 'ping_count' column added!");
+    }
+  };
+
+  const handleCancelOrder = async (order) => {
+    const confirmed = window.confirm(`⚠️ CANCEL ORDER\n\nAre you sure you want to cancel and delete Order #${order.id} for "${order.customer_name}"? This action is irreversible.`);
+    if (confirmed) {
+      try {
+        await deleteOrder(order.id);
+      } catch (e) {
+        console.error("Failed to cancel order:", e);
+        alert("Failed to cancel order.");
+      }
     }
   };
 
@@ -227,27 +239,37 @@ export default function WorkerPage() {
 
                   <div className="order-card-footer">
                     {order.payment_method === "cash" ? (
-                      <button 
-                        className="order-action-btn btn-cook"
-                        onClick={() => {
-                          if (!order.payment_ref) {
-                            // Legacy order handling without PIN
-                            handleStatusChange(order.id, "preparing");
-                            return;
-                          }
-                          const pin = window.prompt(`🔒 CASH PAYMENT VERIFICATION\n\nPlease enter the 4-digit PIN shown on the customer's receipt to verify they have paid at the counter:`);
-                          if (pin !== null) {
-                            if (pin.trim().toUpperCase() === order.payment_ref.toUpperCase()) {
+                      <div style={{ display: "flex", gap: "0.5rem", width: "100%" }}>
+                        <button 
+                          className="order-action-btn btn-cook"
+                          onClick={() => {
+                            if (!order.payment_ref) {
+                              // Legacy order handling without PIN
                               handleStatusChange(order.id, "preparing");
-                            } else {
-                              alert("❌ INCORRECT PIN: Verification failed. Please check the PIN on the customer's device.");
+                              return;
                             }
-                          }
-                        }}
-                        style={{ background: "var(--color-success)", color: "white", flex: 1, fontWeight: "bold" }}
-                      >
-                        🔒 Verify PIN & Cook
-                      </button>
+                            const pin = window.prompt(`🔒 CASH PAYMENT VERIFICATION\n\nPlease enter the 4-digit PIN shown on the customer's receipt to verify they have paid at the counter:`);
+                            if (pin !== null) {
+                              if (pin.trim().toUpperCase() === order.payment_ref.toUpperCase()) {
+                                handleStatusChange(order.id, "preparing");
+                              } else {
+                                alert("❌ INCORRECT PIN: Verification failed. Please check the PIN on the customer's device.");
+                              }
+                            }
+                          }}
+                          style={{ background: "var(--color-success)", color: "white", flex: 3, fontWeight: "bold" }}
+                        >
+                          🔒 Verify PIN & Cook
+                        </button>
+                        <button 
+                          className="order-action-btn btn-cancel"
+                          onClick={() => handleCancelOrder(order)}
+                          style={{ background: "rgba(239, 68, 68, 0.15)", color: "var(--accent-red)", border: "1px solid rgba(239, 68, 68, 0.25)", flex: 1, padding: "0 0.5rem", display: "flex", alignItems: "center", justifyContent: "center" }}
+                          title="Cancel / delete this unpaid cash order"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                     ) : (
                       <button 
                         className="order-action-btn btn-cook"

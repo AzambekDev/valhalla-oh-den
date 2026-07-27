@@ -353,7 +353,7 @@ function isSlotInPast(slotValue, now) {
 
 export default function ClientPage() {
   const prevStatusRef = useRef(null);
-  const prevPingCountRef = useRef(0);
+  const prevPingCountRef = useRef(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [status, setStatus] = useState({ isOpen: true, reason: "" });
   const [timeLeft, setTimeLeft] = useState(0);
@@ -389,6 +389,7 @@ export default function ClientPage() {
     
     // Play immediately on trigger (piercing siren sweeps + vibration + background native tray popup)
     playCustomerChime();
+    announceOrderReady(orderId, customerName);
     triggerBackgroundNotification(orderId);
     
     let cycleCount = 1;
@@ -399,6 +400,7 @@ export default function ClientPage() {
         return;
       }
       playCustomerChime();
+      announceOrderReady(orderId, customerName);
       triggerBackgroundNotification(orderId);
       cycleCount++;
     }, 5500);
@@ -718,8 +720,12 @@ export default function ClientPage() {
       const ordersArray = Array.isArray(orders) ? orders : [];
       const match = ordersArray.find(o => o && o.id === activeReceiptId);
       if (match) {
+        if (prevPingCountRef.current === null) {
+          prevPingCountRef.current = match.ping_count || 0;
+        }
+
         const isStatusTransition = prevStatusRef.current !== null && prevStatusRef.current !== "ready" && match.status === "ready";
-        const isPingTriggered = prevPingCountRef.current !== undefined && match.ping_count > prevPingCountRef.current && match.status === "ready";
+        const isPingTriggered = prevPingCountRef.current !== null && match.ping_count > prevPingCountRef.current && match.status === "ready";
 
         if (isStatusTransition || isPingTriggered) {
           startHeavyAlarm(match.id, match.customer_name);

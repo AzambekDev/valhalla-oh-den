@@ -98,11 +98,11 @@ export default function AdminPage() {
     let skewersSold = 0;
 
     const skewerCounts = {
-      "Cheese Tofu": 0,
-      "Fish Sandwich": 0,
-      "Seafood Tofu": 0,
-      "Fish Ball": 0,
-      "Seafood Beancurd Roll": 0
+      "Lobster-flavoured balls": 0,
+      "Stuffed squid rolls": 0,
+      "Golden seafood rolls": 0,
+      "Scallop-style seafood tofu": 0,
+      "Fishball": 0
     };
     let tomYum = 0;
     let kimchi = 0;
@@ -113,7 +113,8 @@ export default function AdminPage() {
       if (order.soup_base === "Tom-Yum") tomYum++;
       if (order.soup_base === "Kimchi") kimchi++;
 
-      Object.keys(order.items).forEach(name => {
+      Object.keys(order.items || {}).forEach(name => {
+        if (name.startsWith("_")) return; // skip metadata keys like _flags
         const qty = order.items[name] || 0;
         skewersSold += qty;
         if (skewerCounts[name] !== undefined) {
@@ -222,18 +223,18 @@ export default function AdminPage() {
     }
 
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Order ID,Customer Name,Phone,Soup Base,Cheese Tofu,Fish Sandwich,Seafood Tofu,Fish Ball,Seafood Beancurd Roll,Total Price ($),Pickup Slot,Payment Method,Payment Ref,Status,Created At\n";
+    csvContent += "Order ID,Customer Name,Phone,Soup Base,Lobster-flavoured balls,Stuffed squid rolls,Golden seafood rolls,Scallop-style seafood tofu,Fishball,Total Price ($),Pickup Slot,Payment Method,Payment Ref,Status,Created At\n";
 
     cleanOrders.forEach(o => {
-      const cheese = o.items["Cheese Tofu"] || 0;
-      const sandwich = o.items["Fish Sandwich"] || 0;
-      const seaTofu = o.items["Seafood Tofu"] || 0;
-      const ball = o.items["Fish Ball"] || 0;
-      const roll = o.items["Seafood Beancurd Roll"] || 0;
+      const lobster = o.items["Lobster-flavoured balls"] || 0;
+      const squid = o.items["Stuffed squid rolls"] || 0;
+      const golden = o.items["Golden seafood rolls"] || 0;
+      const scallop = o.items["Scallop-style seafood tofu"] || 0;
+      const fishball = o.items["Fishball"] || 0;
       const cleanPhone = o.phone.replace(/,/g, ""); 
       const cleanName = o.customer_name.replace(/,/g, "");
 
-      csvContent += `${o.id},${cleanName},${cleanPhone},${o.soup_base},${cheese},${sandwich},${seaTofu},${ball},${roll},${parseFloat(o.total_price).toFixed(2)},${o.pickup_time},${o.payment_method.toUpperCase()},${o.payment_ref || "N/A"},${o.status},${o.created_at}\n`;
+      csvContent += `${o.id},${cleanName},${cleanPhone},${o.soup_base},${lobster},${squid},${golden},${scallop},${fishball},${parseFloat(o.total_price).toFixed(2)},${o.pickup_time},${o.payment_method.toUpperCase()},${o.payment_ref || "N/A"},${o.status},${o.created_at}\n`;
     });
 
     const encodedUri = encodeURI(csvContent);
@@ -259,18 +260,18 @@ export default function AdminPage() {
     }
 
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Order ID,Customer Name,Phone,Soup Base,Cheese Tofu,Fish Sandwich,Seafood Tofu,Fish Ball,Seafood Beancurd Roll,Total Price ($),Pickup Slot,Payment Method,Payment Ref,Status,Created At\n";
+    csvContent += "Order ID,Customer Name,Phone,Soup Base,Lobster-flavoured balls,Stuffed squid rolls,Golden seafood rolls,Scallop-style seafood tofu,Fishball,Total Price ($),Pickup Slot,Payment Method,Payment Ref,Status,Created At\n";
 
     todayOrders.forEach(o => {
-      const cheese = o.items["Cheese Tofu"] || 0;
-      const sandwich = o.items["Fish Sandwich"] || 0;
-      const seaTofu = o.items["Seafood Tofu"] || 0;
-      const ball = o.items["Fish Ball"] || 0;
-      const roll = o.items["Seafood Beancurd Roll"] || 0;
+      const lobster = o.items["Lobster-flavoured balls"] || 0;
+      const squid = o.items["Stuffed squid rolls"] || 0;
+      const golden = o.items["Golden seafood rolls"] || 0;
+      const scallop = o.items["Scallop-style seafood tofu"] || 0;
+      const fishball = o.items["Fishball"] || 0;
       const cleanPhone = o.phone.replace(/,/g, ""); 
       const cleanName = o.customer_name.replace(/,/g, "");
 
-      csvContent += `${o.id},${cleanName},${cleanPhone},${o.soup_base},${cheese},${sandwich},${seaTofu},${ball},${roll},${parseFloat(o.total_price).toFixed(2)},${o.pickup_time},${o.payment_method.toUpperCase()},${o.payment_ref || "N/A"},${o.status},${o.created_at}\n`;
+      csvContent += `${o.id},${cleanName},${cleanPhone},${o.soup_base},${lobster},${squid},${golden},${scallop},${fishball},${parseFloat(o.total_price).toFixed(2)},${o.pickup_time},${o.payment_method.toUpperCase()},${o.payment_ref || "N/A"},${o.status},${o.created_at}\n`;
     });
 
     const encodedUri = encodeURI(csvContent);
@@ -673,7 +674,10 @@ export default function AdminPage() {
                 </tr>
               ) : (
                 paginatedOrders.map(order => {
-                  const itemsCount = Object.values(order.items).reduce((a, b) => a + b, 0);
+                  const itemsCount = Object.entries(order.items || {}).reduce((sum, [name, qty]) => {
+                    if (name.startsWith("_")) return sum;
+                    return sum + (qty || 0);
+                  }, 0);
                   return (
                     <tr key={order.id}>
                       <td style={{ fontFamily: "monospace", fontWeight: 800, color: "var(--accent-gold)" }}>{order.id}</td>
