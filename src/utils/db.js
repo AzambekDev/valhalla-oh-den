@@ -46,23 +46,15 @@ const DEFAULT_ADMIN_HASH = "eed8bf1b966368d93cab3a86d613675102dcf4044e54f66c32e9
 const DEFAULT_WORKER_HASH = "eed8bf1b966368d93cab3a86d613675102dcf4044e54f66c32e90b14b02f28dc";
 const DEFAULT_OWNER_HASH = "43a0d17178a9d26c9e0fe9a74b0b45e38d32f27aed887a008a54bf6e033bf7b9"; // owner123
 
-const OLD_ADMIN_HASHES = [
-  "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9", // admin123
-  "240a10a68a5c3789069d2719a7dfa0b6c698188147d3d2db763ee18a7c29cb01"
-];
-const OLD_WORKER_HASHES = [
-  "fa0990ab6f2ecfd562611cedad67152e8c1117f91c22d15094d1e242314243af", // chef123
-  "65e718b52504285e687895e6f6ee9db566144e82df41e8c7fb97063de7090b8c"
-];
 
-// Setup security defaults and upgrade automatically if legacy defaults are detected
+// Setup security defaults if none exist
 const currentAdminHash = localStorage.getItem("oden_admin_passcode_hash");
-if (!currentAdminHash || OLD_ADMIN_HASHES.includes(currentAdminHash)) {
+if (!currentAdminHash) {
   localStorage.setItem("oden_admin_passcode_hash", DEFAULT_ADMIN_HASH);
 }
 
 const currentWorkerHash = localStorage.getItem("oden_worker_passcode_hash");
-if (!currentWorkerHash || OLD_WORKER_HASHES.includes(currentWorkerHash)) {
+if (!currentWorkerHash) {
   localStorage.setItem("oden_worker_passcode_hash", DEFAULT_WORKER_HASH);
 }
 

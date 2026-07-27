@@ -317,6 +317,40 @@ function unlockAudio() {
   }
 }
 
+const PICKUP_SLOTS = [
+  { value: "10:15 AM", label: "10:15 AM (First Batch)" },
+  { value: "11:30 AM", label: "11:30 AM" },
+  { value: "12:30 PM", label: "12:30 PM" },
+  { value: "1:30 PM", label: "1:30 PM" },
+  { value: "2:30 PM", label: "2:30 PM" },
+  { value: "3:45 PM", label: "3:45 PM (Last Batch)" }
+];
+
+function isSlotInPast(slotValue, now) {
+  const match = slotValue.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+  if (!match) return false;
+  
+  let slotHours = parseInt(match[1], 10);
+  const slotMinutes = parseInt(match[2], 10);
+  const ampm = match[3].toUpperCase();
+  
+  if (ampm === "PM" && slotHours !== 12) {
+    slotHours += 12;
+  } else if (ampm === "AM" && slotHours === 12) {
+    slotHours = 0;
+  }
+  
+  const currentHours = now.getHours();
+  const currentMinutes = now.getMinutes();
+  
+  if (currentHours > slotHours) {
+    return true;
+  } else if (currentHours === slotHours) {
+    return currentMinutes >= slotMinutes;
+  }
+  return false;
+}
+
 export default function ClientPage() {
   const prevStatusRef = useRef(null);
   const prevPingCountRef = useRef(0);
@@ -660,6 +694,16 @@ export default function ClientPage() {
   useEffect(() => {
     localStorage.setItem("valhalla_cached_skewers", JSON.stringify(skewerQty));
   }, [skewerQty]);
+
+  // Reset pickupTime if the selected slot becomes in the past
+  useEffect(() => {
+    if (pickupTime) {
+      const now = getCurrentTime();
+      if (isSlotInPast(pickupTime, now)) {
+        setPickupTime("");
+      }
+    }
+  }, [timeLeft, pickupTime]);
 
   // Subscribe to updates for the active order to show real-time status changes
   useEffect(() => {
@@ -1449,12 +1493,11 @@ export default function ClientPage() {
                       required
                     >
                       <option value="">-- Choose a pickup slot at Atrium --</option>
-                      <option value="10:15 AM">10:15 AM (First Batch)</option>
-                      <option value="11:30 AM">11:30 AM</option>
-                      <option value="12:30 PM">12:30 PM</option>
-                      <option value="1:30 PM">1:30 PM</option>
-                      <option value="2:30 PM">2:30 PM</option>
-                      <option value="3:45 PM">3:45 PM (Last Batch)</option>
+                      {PICKUP_SLOTS.filter(slot => !isSlotInPast(slot.value, getCurrentTime())).map(slot => (
+                        <option key={slot.value} value={slot.value}>
+                          {slot.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>

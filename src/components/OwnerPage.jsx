@@ -157,7 +157,7 @@ export default function OwnerPage() {
               <input 
                 type="password" 
                 className="form-input" 
-                placeholder="Leave blank to keep current (default: admin123)"
+                placeholder="Leave blank to keep current (default: valhallaohden123)"
                 value={newAdminPass}
                 onChange={(e) => setNewAdminPass(e.target.value)}
                 style={{ padding: "0.5rem", fontSize: "0.85rem" }}
@@ -169,7 +169,7 @@ export default function OwnerPage() {
               <input 
                 type="password" 
                 className="form-input" 
-                placeholder="Leave blank to keep current (default: chef123)"
+                placeholder="Leave blank to keep current (default: valhallaohden123)"
                 value={newWorkerPass}
                 onChange={(e) => setNewWorkerPass(e.target.value)}
                 style={{ padding: "0.5rem", fontSize: "0.85rem" }}
