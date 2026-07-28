@@ -11,7 +11,7 @@ import {
   QrCode,
   X 
 } from "lucide-react";
-import { subscribeOrders, updateOrderStatus, pingCustomer, deleteOrder } from "../utils/db";
+import { subscribeOrders, updateOrderStatus, pingCustomer, deleteOrder, getPaymentSlip } from "../utils/db";
 
 // Browser Synthetic "Ding-Dong" bell to avoid external asset dependency
 function playKitchenChime() {
@@ -64,6 +64,17 @@ function formatTime(dateStr) {
 export default function WorkerPage() {
   const [orders, setOrders] = useState([]);
   const [activeReceiptOrder, setActiveReceiptOrder] = useState(null); // Modal viewer order
+  const [loadingReceipt, setLoadingReceipt] = useState(false);
+
+  const handleViewReceipt = async (order) => {
+    setActiveReceiptOrder(order);
+    if (!order.payment_slip) {
+      setLoadingReceipt(true);
+      const slip = await getPaymentSlip(order.id);
+      setActiveReceiptOrder(prev => (prev?.id === order.id ? { ...prev, payment_slip: slip } : prev));
+      setLoadingReceipt(false);
+    }
+  };
   const [pendingLimit, setPendingLimit] = useState(20);
   const [preparingLimit, setPreparingLimit] = useState(20);
   const [readyLimit, setReadyLimit] = useState(20);
@@ -202,7 +213,7 @@ export default function WorkerPage() {
                       <span 
                         className="order-card-soup" 
                         style={{ background: "rgba(242, 161, 38, 0.12)", color: "var(--accent-gold)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}
-                        onClick={() => setActiveReceiptOrder(order)}
+                        onClick={() => handleViewReceipt(order)}
                         title="Click to verify screenshot slip"
                       >
                         <QrCode size={11} /> TnG (Ref: {(order.payment_ref || "").slice(-4) || "N/A"}) 📸
@@ -369,7 +380,7 @@ export default function WorkerPage() {
                       <span 
                         className="order-card-soup" 
                         style={{ background: "rgba(242, 161, 38, 0.12)", color: "var(--accent-gold)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}
-                        onClick={() => setActiveReceiptOrder(order)}
+                        onClick={() => handleViewReceipt(order)}
                       >
                         <QrCode size={11} /> TnG (Ref: {(order.payment_ref || "").slice(-4) || "N/A"}) 📸
                       </span>
@@ -491,7 +502,7 @@ export default function WorkerPage() {
                       <span 
                         className="order-card-soup" 
                         style={{ background: "rgba(242, 161, 38, 0.12)", color: "var(--accent-gold)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}
-                        onClick={() => setActiveReceiptOrder(order)}
+                        onClick={() => handleViewReceipt(order)}
                       >
                         <QrCode size={11} /> TnG (Ref: {(order.payment_ref || "").slice(-4) || "N/A"}) 📸
                       </span>
@@ -612,7 +623,7 @@ export default function WorkerPage() {
                       <span 
                         className="order-card-soup" 
                         style={{ background: "rgba(255, 255, 255, 0.05)", color: "var(--color-text-muted)", display: "inline-flex", alignItems: "center", gap: "0.15rem", cursor: "pointer" }}
-                        onClick={() => setActiveReceiptOrder(order)}
+                        onClick={() => handleViewReceipt(order)}
                       >
                         <QrCode size={11} /> TnG (Ref: {(order.payment_ref || "").slice(-4) || "N/A"}) 📸
                       </span>
@@ -715,7 +726,12 @@ export default function WorkerPage() {
 
               {/* Render Slip Image screenshot */}
               <div style={{ borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border-light)", display: "flex", background: "black", minHeight: "250px" }}>
-                {activeReceiptOrder.payment_slip ? (
+                {loadingReceipt ? (
+                  <div style={{ margin: "auto", color: "var(--color-text-dim)", textAlign: "center", padding: "2rem" }}>
+                     <div style={{ marginBottom: "0.5rem", fontSize: "1.5rem" }}>⏳</div>
+                     Loading encrypted receipt image...
+                  </div>
+                ) : activeReceiptOrder.payment_slip ? (
                   <img 
                     src={activeReceiptOrder.payment_slip} 
                     alt="Touch n Go success payment slip" 

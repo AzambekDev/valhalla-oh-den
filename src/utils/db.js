@@ -123,7 +123,9 @@ export async function getOrders() {
       try {
         const { data, error } = await supabase
           .from("orders")
-          .select("*")
+          .select("id, customer_name, phone, soup_base, items, total_price, pickup_time, status, payment_method, payment_ref, ping_count, created_at")
+          .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .limit(200)
           .order("created_at", { ascending: false });
         if (error) throw error;
         return data || [];
@@ -146,11 +148,13 @@ export async function addOrder(orderData) {
     status: "pending",
     payment_method: "cash",
     payment_ref: "",
-    payment_slip: null,
     ping_count: 0,
     created_at: new Date().toISOString(),
     ...orderData
   };
+
+  const paymentSlip = newOrder.payment_slip;
+  delete newOrder.payment_slip; // Remove from main row
 
   const supabase = getSupabaseClient();
   if (supabase) {
@@ -160,12 +164,20 @@ export async function addOrder(orderData) {
         .insert([newOrder])
         .select();
       if (error) throw error;
+      
+      if (paymentSlip) {
+        const { error: slipError } = await supabase
+          .from("order_slips")
+          .insert([{ order_id: newOrder.id, payment_slip: paymentSlip }]);
+        if (slipError) console.error("Failed to insert payment slip:", slipError);
+      }
       return data[0];
     } catch (e) {
       console.error("Supabase addOrder error, falling back to local:", e);
     }
   }
 
+  if (paymentSlip) newOrder.payment_slip = paymentSlip; // Reattach for local fallback
   const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
   orders.unshift(newOrder);
   localStorage.setItem("oden_orders", JSON.stringify(orders));
@@ -245,6 +257,27 @@ export async function deleteOrder(orderId) {
   return true;
 }
 
+export async function getPaymentSlip(orderId) {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("order_slips")
+        .select("payment_slip")
+        .eq("order_id", orderId)
+        .single();
+      if (error) throw error;
+      return data?.payment_slip || null;
+    } catch (e) {
+      console.error("Supabase getPaymentSlip error, falling back to local:", e);
+    }
+  }
+
+  const orders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
+  const order = orders.find(o => o.id === orderId);
+  return order?.payment_slip || null;
+}
+
 export async function clearOrders() {
   const supabase = getSupabaseClient();
   if (supabase) {
@@ -293,6 +326,7 @@ export async function pingCustomer(orderId, currentCount) {
 
 export function subscribeOrders(callback) {
   let active = true;
+  let localCache = [];
 
   const handleSettingsSync = (ordersList) => {
     if (!ordersList || !Array.isArray(ordersList)) return;
@@ -315,16 +349,23 @@ export function subscribeOrders(callback) {
     }
   };
 
-  getOrders().then(orders => {
+  const dispatchUpdate = (ordersList) => {
     if (active) {
-      const ordersArray = Array.isArray(orders) ? orders : [];
+      const ordersArray = Array.isArray(ordersList) ? ordersList : [];
       handleSettingsSync(ordersArray);
       callback(ordersArray);
+    }
+  };
+
+  getOrders().then(orders => {
+    if (active) {
+      localCache = Array.isArray(orders) ? orders : [];
+      dispatchUpdate(localCache);
     }
   }).catch(err => {
     console.error("subscribeOrders initial fetch error:", err);
     if (active) {
-      callback([]);
+      dispatchUpdate([]);
     }
   });
 
@@ -337,35 +378,27 @@ export function subscribeOrders(callback) {
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "orders" },
-          async () => {
+          (payload) => {
             try {
-              const freshOrders = await getOrders();
-              if (active) {
-                const ordersArray = Array.isArray(freshOrders) ? freshOrders : [];
-                handleSettingsSync(ordersArray);
-                callback(ordersArray);
+              if (payload.eventType === 'INSERT') {
+                const exists = localCache.find(o => o.id === payload.new.id);
+                if (!exists) {
+                  localCache = [payload.new, ...localCache];
+                }
+              } else if (payload.eventType === 'UPDATE') {
+                localCache = localCache.map(o => o.id === payload.new.id ? payload.new : o);
+              } else if (payload.eventType === 'DELETE') {
+                localCache = localCache.filter(o => o.id !== payload.old.id);
               }
+              // Ensure sorted by created_at desc
+              localCache.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+              dispatchUpdate([...localCache]);
             } catch (err) {
               console.error("postgres_changes event handle error:", err);
             }
           }
         )
         .subscribe();
-
-      // 🔄 Polling fallback: Automatically query fresh orders from the cloud database every 5 seconds
-      // to guarantee instant dashboard refreshes if WebSockets are slow or throttling.
-      const pollInterval = setInterval(async () => {
-        try {
-          const freshOrders = await getOrders();
-          if (active) {
-            const ordersArray = Array.isArray(freshOrders) ? freshOrders : [];
-            handleSettingsSync(ordersArray);
-            callback(ordersArray);
-          }
-        } catch (err) {
-          console.error("pollInterval cloud error:", err);
-        }
-      }, 5000);
 
       return () => {
         active = false;
@@ -374,7 +407,6 @@ export function subscribeOrders(callback) {
         } catch (err) {
           console.error("removeChannel error:", err);
         }
-        clearInterval(pollInterval);
       };
     } catch (e) {
       console.error("Supabase subscription setup failed, falling back to local:", e);
@@ -384,21 +416,15 @@ export function subscribeOrders(callback) {
   // Fallback to local storage polling (always used as a resilient fallback if Supabase fails or is disabled)
   const handleStorageChange = async () => {
     const freshOrders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
-    if (active) {
-      const ordersArray = Array.isArray(freshOrders) ? freshOrders : [];
-      handleSettingsSync(ordersArray);
-      callback(ordersArray);
-    }
+    localCache = freshOrders;
+    dispatchUpdate(localCache);
   };
 
   // 🔄 Local Polling fallback: Periodically load local storage to sync tabs instantly
   const pollInterval = setInterval(async () => {
     const freshOrders = JSON.parse(localStorage.getItem("oden_orders") || "[]");
-    if (active) {
-      const ordersArray = Array.isArray(freshOrders) ? freshOrders : [];
-      handleSettingsSync(ordersArray);
-      callback(ordersArray);
-    }
+    localCache = freshOrders;
+    dispatchUpdate(localCache);
   }, 5000);
 
   window.addEventListener("storage", handleStorageChange);
@@ -468,7 +494,6 @@ export async function ensureStallSettings() {
         status: "completed",
         payment_method: "cash",
         payment_ref: "",
-        payment_slip: null,
         ping_count: 0,
         created_at: new Date().toISOString()
       };
@@ -538,7 +563,6 @@ export async function syncStallSettings(forceStatus, cutoffTime, luckyProb) {
         status: "completed",
         payment_method: "cash",
         payment_ref: "",
-        payment_slip: null,
         ping_count: 0,
         created_at: new Date().toISOString()
       });
@@ -598,7 +622,6 @@ function generateSingleMockOrder(idNum, forceStatus) {
     status: status,
     payment_method: payment,
     payment_ref: paymentRef,
-    payment_slip: null,
     ping_count: 0,
     created_at: new Date(Date.now() - Math.random() * 8 * 3600 * 1000).toISOString()
   };

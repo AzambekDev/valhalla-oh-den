@@ -16,9 +16,14 @@ CREATE TABLE public.orders (
     status TEXT NOT NULL DEFAULT 'pending',
     payment_method TEXT NOT NULL DEFAULT 'cash',
     payment_ref TEXT NOT NULL DEFAULT '',
-    payment_slip TEXT, -- Base64 encoded screenshot success slip image
     ping_count INTEGER NOT NULL DEFAULT 0, -- Counter to trigger remote customer browser audio chimes
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 1b. Create the isolated slip payload table
+CREATE TABLE public.order_slips (
+    order_id TEXT PRIMARY KEY REFERENCES public.orders(id) ON DELETE CASCADE,
+    payment_slip TEXT NOT NULL
 );
 
 -- 2. Enable Realtime replication for this table
@@ -34,20 +39,14 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
 -- we will enable RLS and set public policies allowing all anonymous actions (read, write, update, delete).
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read access" 
-ON public.orders FOR SELECT 
-USING (true);
+CREATE POLICY "Allow public read access" ON public.orders FOR SELECT USING (true);
+CREATE POLICY "Allow public insert access" ON public.orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update access" ON public.orders FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete access" ON public.orders FOR DELETE USING (true);
 
-CREATE POLICY "Allow public inserts" 
-ON public.orders FOR INSERT 
-WITH CHECK (true);
-
-CREATE POLICY "Allow public updates" 
-ON public.orders FOR UPDATE 
-USING (true);
-
-CREATE POLICY "Allow public deletes" 
-ON public.orders FOR DELETE 
-USING (true);
+ALTER TABLE public.order_slips ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read slips" ON public.order_slips FOR SELECT USING (true);
+CREATE POLICY "Allow public insert slips" ON public.order_slips FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public delete slips" ON public.order_slips FOR DELETE USING (true);
 
 -- 🍢 Your upgraded OdenPre Real-Time database is now ready!
