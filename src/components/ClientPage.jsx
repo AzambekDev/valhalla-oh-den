@@ -17,7 +17,6 @@ import {
   Maximize,
   Download
 } from "lucide-react";
-import Tesseract from "tesseract.js";
 import { 
   getCurrentTime, 
   getOrderingStatus, 
@@ -28,13 +27,13 @@ import {
 } from "../utils/time";
 import { addOrder, subscribeOrders, getOrders } from "../utils/db";
 
-// Custom Menu Pricing (All skewers set to RM 3.00)
+// Custom Menu Pricing
 const SKEWER_PRICES = {
-  "Lobster-flavoured balls": 3.00,
-  "Stuffed squid rolls": 3.00,
-  "Golden seafood rolls": 3.00,
-  "Scallop-style seafood tofu": 3.00,
-  "Fishball": 3.00
+  "Lobster-flavoured balls": 6.00,
+  "Stuffed squid rolls": 6.00,
+  "Golden seafood rolls": 6.00,
+  "Scallop-style seafood tofu": 6.00,
+  "Fishball": 6.00
 };
 
 const SKEWER_DESCRIPTIONS = {
@@ -532,7 +531,6 @@ export default function ClientPage() {
   const [isRolling, setIsRolling] = useState(false);
 
   // 🔍 QR Scanning & Modal States
-  const [isScanningQR, setIsScanningQR] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   const openLuckyGame = () => {
@@ -571,7 +569,7 @@ export default function ClientPage() {
   };
 
   // 🎲 Mystery Oden States & Randomizer Logic
-  const [mysteryBudget, setMysteryBudget] = useState(14); // Default: RM 14 (3 skewers)
+  const [mysteryBudget, setMysteryBudget] = useState(26); // Default: RM 26 (3 skewers)
   const [mysteryResult, setMysteryResult] = useState(null); // Premium UI result modal trigger state
 
   const handleGenerateMysteryOden = () => {
@@ -579,8 +577,8 @@ export default function ClientPage() {
     const soups = Object.keys(SOUP_DETAILS);
     const randomSoup = soups[Math.floor(Math.random() * soups.length)];
     
-    // 2. Calculate the number of skewers based on budget (soup base is RM 5, each skewer is RM 3)
-    const skewerCount = Math.floor((mysteryBudget - 5) / 3);
+    // 2. Calculate the number of skewers based on budget (soup base is RM 8, each skewer is RM 6)
+    const skewerCount = Math.floor((mysteryBudget - 8) / 6);
     
     // 3. Reset all skewer quantities
     const freshSkewers = {
@@ -613,7 +611,6 @@ export default function ClientPage() {
 
   // 💳 New Payment States
   const [paymentMethod, setPaymentMethod] = useState("cash"); // 'cash' or 'tng'
-  const [paymentRef, setPaymentRef] = useState("");
   const [paymentSlip, setPaymentSlip] = useState(null); // base64 string
   const [slipFileName, setSlipFileName] = useState("");
   const [receiptFlags, setReceiptFlags] = useState({ amountMatch: false, nameMatch: false, isFresh: true });
@@ -777,74 +774,13 @@ export default function ClientPage() {
       const base64Image = event.target.result;
       setPaymentSlip(base64Image); // Base64 string
 
-      // Start OCR Processing
-      setIsScanningQR(true);
-      try {
-        const { data: { text } } = await Tesseract.recognize(base64Image, 'eng');
-        console.log("OCR Raw Text:\n", text); // Debugging
-
-        // ----- HEURISTIC VERIFICATION -----
-        const expectedTotalStr = calculateTotal().toFixed(2);
-        const amountMatch = text.includes(expectedTotalStr);
-        
-        // Ensure name matching ignores case
-        const nameMatch = text.toUpperCase().includes("AZAMBEK") || text.toUpperCase().includes("SATTAROV");
-
-        setReceiptFlags({
-          amountMatch,
-          nameMatch,
-          isFresh
-        });
-
-        console.log(`Receipt Verification => Amount Match: ${amountMatch}, Name Match: ${nameMatch}, Fresh: ${isFresh}`);
-
-        let extractedId = null;
-        const lines = text.split('\n');
-        const keywords = ['ref', 'reference', 'transaction', 'trx', 'txn', 'id'];
-
-        // Strategy 1: Look for keywords in each line
-        for (const line of lines) {
-          const lowerLine = line.toLowerCase();
-          if (keywords.some(k => lowerLine.includes(k))) {
-            // Split by spaces, colons, hyphens
-            const tokens = line.split(/[:\s-]+/);
-            // Look for a token that is at least 6 characters long and contains numbers
-            const possibleId = tokens.find(t => t.length >= 6 && /\d/.test(t) && !t.toLowerCase().includes('date') && !t.toLowerCase().includes('time'));
-            if (possibleId) {
-              extractedId = possibleId;
-              break;
-            }
-          }
-        }
-
-        // Strategy 2: Look for generic TNG formats
-        if (!extractedId) {
-          const cleanText = text.replace(/\s+/g, '');
-          const tngMatch = cleanText.match(/TNG-?[A-Z0-9]{5,}/i);
-          if (tngMatch) extractedId = tngMatch[0];
-        }
-
-        // Strategy 3: Look for any sequence of 8 to 20 digits (e.g., standard bank transfer IDs)
-        if (!extractedId) {
-          const cleanText = text.replace(/\s+/g, '');
-          const numMatch = cleanText.match(/\d{8,20}/);
-          if (numMatch) extractedId = numMatch[0];
-        }
-        
-        if (extractedId) {
-          const finalRef = extractedId.toUpperCase().replace(/[^A-Z0-9-]/g, '');
-          setPaymentRef(finalRef);
-          alert("Success! Transaction ID auto-extracted from receipt: " + finalRef);
-        } else {
-          console.warn("OCR could not find a matching reference number.");
-          alert("Could not automatically read the Transaction ID. Please enter it manually.");
-        }
-      } catch (err) {
-        console.error("OCR Failed:", err);
-      } finally {
-        setIsScanningQR(false);
-      }
+      setReceiptFlags({
+        amountMatch: false,
+        nameMatch: false,
+        isFresh
+      });
     };
+
     reader.readAsDataURL(file);
   };
 
@@ -863,7 +799,7 @@ export default function ClientPage() {
       sum += skewerQty[key] * (SKEWER_PRICES[key] || 0);
     });
     if (soupBase) {
-      sum += 5.00; // Soup stock is RM 5.00
+      sum += 8.00; // Soup stock is RM 8.00
     }
     return sum;
   };
@@ -904,10 +840,6 @@ export default function ClientPage() {
 
     // TnG eWallet Validations
     if (paymentMethod === "tng") {
-      if (!paymentRef.trim()) {
-        alert("Please enter the 12-digit Touch 'n Go Transaction Reference ID!");
-        return;
-      }
       if (!paymentSlip) {
         alert("Please upload the transaction success screenshot slip for verification!");
         return;
@@ -938,9 +870,7 @@ export default function ClientPage() {
       total_price: calculateTotal(),
       pickup_time: pickupTime,
       payment_method: finalPaymentMethod,
-      payment_ref: finalPaymentMethod === "tng" 
-        ? paymentRef.trim() 
-        : finalPaymentMethod === "cash" 
+      payment_ref: finalPaymentMethod === "cash" 
           ? Math.floor(1000 + Math.random() * 9000).toString()
           : "",
       payment_slip: finalPaymentMethod === "tng" ? paymentSlip : null
@@ -980,7 +910,6 @@ export default function ClientPage() {
       setCustPhone("");
       setPickupTime("ASAP");
       setPaymentMethod("cash");
-      setPaymentRef("");
       setPaymentSlip(null);
       setSlipFileName("");
       setReceiptFlags({ amountMatch: false, nameMatch: false, isFresh: true });
@@ -1107,12 +1036,6 @@ export default function ClientPage() {
                   : (activeOrder.status === "pending" ? "Pay at Counter (Awaiting Payment)" : "Paid at Counter (Verified ✅)"))}
               </span>
             </div>
-            {activeOrder.payment_method === "tng" && (
-              <div className="receipt-meta-row">
-                <span className="receipt-meta-label">Ref ID:</span>
-                <span className="receipt-meta-val" style={{ fontFamily: "monospace", fontSize: "0.8rem", wordBreak: "break-all", textAlign: "right", marginLeft: "1rem" }}>{activeOrder.payment_ref}</span>
-              </div>
-            )}
             {activeOrder.payment_method === "cash" && activeOrder.status === "pending" && (
               <div style={{ marginTop: "0.75rem", background: "rgba(239, 68, 68, 0.05)", padding: "0.75rem", borderRadius: "8px", border: "1px dashed var(--accent-red)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
                 <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--accent-red)" }}>CASH VERIFICATION PIN</span>
@@ -1134,7 +1057,7 @@ export default function ClientPage() {
             
             <div className="receipt-item-row" style={{ fontWeight: 700, color: activeOrder.soup_base === "Tom-Yum" ? "var(--accent-red)" : "var(--accent-gold)", marginBottom: "0.5rem" }}>
               <span>🍲 Soup: {activeOrder.soup_base} Base</span>
-              <span>$5.00</span>
+              <span>$8.00</span>
             </div>
 
             {Object.keys(activeOrder.items).filter(k => k !== '_flags').map((key) => (
@@ -1242,7 +1165,7 @@ export default function ClientPage() {
             <div className="mystery-recipe-container">
               <div className="mystery-recipe-header">
                 <span>🍲 {mysteryResult.soupName}</span>
-                <span>RM 5.00</span>
+                <span>RM 8.00</span>
               </div>
               
               <div className="mystery-recipe-list">
@@ -1253,7 +1176,7 @@ export default function ClientPage() {
                     <div key={key} className="mystery-recipe-row">
                       <span>🍢 {key}</span>
                       <span style={{ fontWeight: 800, color: "var(--accent-gold)" }}>
-                        {qty}x (RM {(qty * 3).toFixed(2)})
+                        {qty}x (RM {(qty * 6).toFixed(2)})
                       </span>
                     </div>
                   );
@@ -1357,9 +1280,9 @@ export default function ClientPage() {
                   
                   {/* Grid of budget buttons */}
                   <div className="mystery-budget-grid">
-                    {[8, 11, 14, 17, 20].map((price) => {
+                    {[14, 20, 26, 32, 38].map((price) => {
                       const isSelected = mysteryBudget === price;
-                      const skewerCount = Math.floor((price - 5) / 3);
+                      const skewerCount = Math.floor((price - 8) / 6);
                       return (
                         <button
                           key={price}
@@ -1378,7 +1301,7 @@ export default function ClientPage() {
                   </div>
 
                   <div style={{ fontSize: "0.65rem", color: "var(--color-text-dim)", marginTop: "0.25rem" }}>
-                    Includes 1 Soup Base + {Math.floor((mysteryBudget - 5) / 3)} Random Skewers
+                    Includes 1 Soup Base + {Math.floor((mysteryBudget - 8) / 6)} Random Skewers
                   </div>
                 </div>
 
@@ -1585,18 +1508,6 @@ export default function ClientPage() {
 
                       <div className="tng-payment-inputs">
                         <div className="form-group">
-                          <label className="form-label" style={{ fontSize: "0.75rem" }}>12-Digit TnG Transaction Ref ID</label>
-                          <input 
-                            type="text" 
-                            className="form-input" 
-                            placeholder="e.g. TNG-182938..."
-                            value={paymentRef}
-                            onChange={(e) => setPaymentRef(e.target.value)}
-                            style={{ padding: "0.5rem", fontSize: "0.85rem" }}
-                          />
-                        </div>
-
-                        <div className="form-group">
                           <label className="form-label" style={{ fontSize: "0.75rem" }}>Upload Success Screenshot</label>
                           <div style={{ position: "relative" }}>
                             <input 
@@ -1605,16 +1516,13 @@ export default function ClientPage() {
                               accept="image/*"
                               onChange={handleFileChange}
                               style={{ display: "none" }}
-                              disabled={isScanningQR}
                             />
                             <label 
                               htmlFor="slip-upload" 
                               className="btn btn-secondary"
-                              style={{ padding: "0.5rem", fontSize: "0.75rem", borderRadius: "8px", cursor: isScanningQR ? "not-allowed" : "pointer", width: "100%", justifyContent: "center", gap: "0.25rem", opacity: isScanningQR ? 0.7 : 1 }}
+                              style={{ padding: "0.5rem", fontSize: "0.75rem", borderRadius: "8px", cursor: "pointer", width: "100%", justifyContent: "center", gap: "0.25rem" }}
                             >
-                              {isScanningQR ? (
-                                <>Scanning Receipt... <span className="ocr-spinner" style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>🔄</span></>
-                              ) : slipFileName ? (
+                              {slipFileName ? (
                                 <>Uploaded ✓</>
                               ) : (
                                 <><Upload size={13} /> Browse</>
@@ -1669,7 +1577,7 @@ export default function ClientPage() {
               <button 
                 className="btn btn-primary" 
                 onClick={handleSubmit}
-                disabled={isSubmitting || !custName.trim() || !custPhone.trim() || !pickupTime || (paymentMethod === "tng" && (!paymentRef.trim() || !paymentSlip))}
+                disabled={isSubmitting || !custName.trim() || !custPhone.trim() || !pickupTime || (paymentMethod === "tng" && !paymentSlip)}
                 style={{ background: "var(--color-success)", color: "#ffffff", boxShadow: "0 4px 14px rgba(16, 185, 129, 0.25)" }}
               >
                 {isSubmitting ? "Locking in pre-order..." : `Confirm & Pre-Order! (RM ${calculateTotal().toFixed(2)}) 🍢`}
@@ -1705,7 +1613,7 @@ export default function ClientPage() {
           {soupBase ? (
             <div className="cart-item" style={{ color: soupBase === "Tom-Yum" ? "var(--accent-red)" : "var(--accent-gold)", fontWeight: 700 }}>
               <span className="cart-item-name">🍲 Soup: {soupBase}</span>
-              <span className="cart-item-qty">$5.00</span>
+              <span className="cart-item-qty">$8.00</span>
             </div>
           ) : (
             <div className="cart-item" style={{ fontStyle: "italic", color: "var(--color-text-dim)" }}>
@@ -1723,7 +1631,7 @@ export default function ClientPage() {
                   <div className="cart-item" key={key}>
                     <span className="cart-item-name">{key}</span>
                     <span className="cart-item-qty">
-                      {skewerQty[key]} x ${(SKEWER_PRICES[key] !== undefined ? SKEWER_PRICES[key] : 3.00).toFixed(2)}
+                      {skewerQty[key]} x ${(SKEWER_PRICES[key] !== undefined ? SKEWER_PRICES[key] : 6.00).toFixed(2)}
                     </span>
                   </div>
                 );
