@@ -29,11 +29,11 @@ import { addOrder, subscribeOrders, getOrders } from "../utils/db";
 
 // Custom Menu Pricing
 const SKEWER_PRICES = {
-  "Lobster-flavoured balls": 6.00,
-  "Stuffed squid rolls": 6.00,
-  "Golden seafood rolls": 6.00,
-  "Scallop-style seafood tofu": 6.00,
-  "Fishball": 6.00
+  "Lobster-flavoured balls": 3.00,
+  "Stuffed squid rolls": 3.00,
+  "Golden seafood rolls": 3.00,
+  "Scallop-style seafood tofu": 3.00,
+  "Fishball": 3.00
 };
 
 const SKEWER_DESCRIPTIONS = {
@@ -569,7 +569,7 @@ export default function ClientPage() {
   };
 
   // 🎲 Mystery Oden States & Randomizer Logic
-  const [mysteryBudget, setMysteryBudget] = useState(26); // Default: RM 26 (3 skewers)
+  const [mysteryBudget, setMysteryBudget] = useState(17); // Default: RM 17 (3 skewers)
   const [mysteryResult, setMysteryResult] = useState(null); // Premium UI result modal trigger state
 
   const handleGenerateMysteryOden = () => {
@@ -577,8 +577,8 @@ export default function ClientPage() {
     const soups = Object.keys(SOUP_DETAILS);
     const randomSoup = soups[Math.floor(Math.random() * soups.length)];
     
-    // 2. Calculate the number of skewers based on budget (soup base is RM 8, each skewer is RM 6)
-    const skewerCount = Math.floor((mysteryBudget - 8) / 6);
+    // 2. Calculate the number of skewers based on budget (soup base is RM 8, each skewer is RM 3)
+    const skewerCount = Math.floor((mysteryBudget - 8) / 3);
     
     // 3. Reset all skewer quantities
     const freshSkewers = {
@@ -1176,7 +1176,7 @@ export default function ClientPage() {
                     <div key={key} className="mystery-recipe-row">
                       <span>🍢 {key}</span>
                       <span style={{ fontWeight: 800, color: "var(--accent-gold)" }}>
-                        {qty}x (RM {(qty * 6).toFixed(2)})
+                        {qty}x (RM {(qty * 3).toFixed(2)})
                       </span>
                     </div>
                   );
@@ -1280,9 +1280,9 @@ export default function ClientPage() {
                   
                   {/* Grid of budget buttons */}
                   <div className="mystery-budget-grid">
-                    {[14, 20, 26, 32, 38].map((price) => {
+                    {[11, 14, 17, 20, 23].map((price) => {
                       const isSelected = mysteryBudget === price;
-                      const skewerCount = Math.floor((price - 8) / 6);
+                      const skewerCount = Math.floor((price - 8) / 3);
                       return (
                         <button
                           key={price}
@@ -1301,7 +1301,7 @@ export default function ClientPage() {
                   </div>
 
                   <div style={{ fontSize: "0.65rem", color: "var(--color-text-dim)", marginTop: "0.25rem" }}>
-                    Includes 1 Soup Base + {Math.floor((mysteryBudget - 8) / 6)} Random Skewers
+                    Includes 1 Soup Base + {Math.floor((mysteryBudget - 8) / 3)} Random Skewers
                   </div>
                 </div>
 
@@ -1631,7 +1631,7 @@ export default function ClientPage() {
                   <div className="cart-item" key={key}>
                     <span className="cart-item-name">{key}</span>
                     <span className="cart-item-qty">
-                      {skewerQty[key]} x ${(SKEWER_PRICES[key] !== undefined ? SKEWER_PRICES[key] : 6.00).toFixed(2)}
+                      {skewerQty[key]} x ${(SKEWER_PRICES[key] !== undefined ? SKEWER_PRICES[key] : 3.00).toFixed(2)}
                     </span>
                   </div>
                 );
